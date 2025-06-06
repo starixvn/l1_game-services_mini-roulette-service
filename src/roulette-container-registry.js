@@ -5,6 +5,7 @@ import { PlaceBetConsumer, SettleGameRoundConsumer } from "./consumers";
 import { RouletteGameCron, RouletteProcessBetQueue } from "./crons";
 import { RouletteBets, RouletteRounds, RouletteBetLogs } from "./models";
 import RouletteHistoryQuery from "./query-apis/roulette-history-query";
+import HttpRouter from "./routers/http-router";
 
 const { asClass, asValue } = awilix;
 
@@ -43,6 +44,14 @@ export default class RouletteContainerRegistry extends Table.TableContainerRegis
 
         this.container.register({
             historyQuery: asClass(RouletteHistoryQuery).singleton(),
+        });
+    }
+
+    registerRouters() {
+        super.registerRouters();
+
+        this.container.register({
+            httpRouter: asClass(HttpRouter),
         });
     }
 }

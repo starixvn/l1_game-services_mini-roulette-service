@@ -72,7 +72,7 @@ export default class RouletteSettleGameRoundConsumer extends Table.EventConsumer
             await this.callEndGame(bet, roundId, time, betResult);
 
             this.captureBetResult(bet.uid, betResult, bet.rate);
-            this.userBetResultPublisher.publishToUser(bet.uid, this.collectRoundResult(result, settlementResult, roundId));
+            this.userBetResultPublisher.publishToUser(bet.uid, { finish: this.collectRoundResult(result, settlementResult, roundId) });
             await this.userBetResultPublisher.publish(bet.uid, betResult);
         }
     }

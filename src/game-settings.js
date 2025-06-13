@@ -13,6 +13,6 @@ export default {
     },
     choicesMapper: {},
     defaultBetTracks: {},
-    numberOfRoundHistory: 300,
+    numberOfRoundHistory: 10,
     hedgeBetGroups: ["oddEven", "bigSmall", "redBlack"],
 };

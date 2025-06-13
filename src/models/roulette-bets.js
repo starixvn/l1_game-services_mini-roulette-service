@@ -33,7 +33,7 @@ const schema = new mongoose.Schema({
     roundId: { type: Number, required: true },
     paid: { type: Boolean, default: false },
 });
-const modelName = "miniroulette1_bets";
+const modelName = "miniroulette_bets";
 const bets = mongoose.model(modelName, schema);
 
 export { bets as RouletteBets };

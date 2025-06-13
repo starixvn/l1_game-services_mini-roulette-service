@@ -20,11 +20,12 @@ const settlementResultSchema = new mongoose.Schema(
 
 const Schema = new mongoose.Schema({
     id: { type: Number, required: true },
+    uid: { type: String, required: true },
     result: { type: Number, required: true },
     settlementResult: settlementResultSchema,
     time: { type: Date, default: new Date() },
     exchangeRateId: { type: Number, required: true },
 });
-const modelName = "miniroulette1_rounds";
+const modelName = "miniroulette_rounds";
 
 export default mongoose.model(modelName, Schema);

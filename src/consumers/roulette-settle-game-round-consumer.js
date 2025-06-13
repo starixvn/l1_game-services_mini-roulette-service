@@ -31,7 +31,7 @@ export default class RouletteSettleGameRoundConsumer extends Table.EventConsumer
         if (!bet) {
             return null;
         }
-        const { roundId } = bet;
+        const { roundId, uid } = bet;
         const round = await this.roundsRepository.findOne({ id: roundId }).lean().exec();
         if (round) {
             return round;
@@ -42,6 +42,7 @@ export default class RouletteSettleGameRoundConsumer extends Table.EventConsumer
             const newRound = {
                 id: roundId,
                 result,
+                uid,
                 settlementResult,
                 time: new Date(),
                 exchangeRateId: exchangeRates.exId,

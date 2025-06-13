@@ -5,12 +5,9 @@ export class RouletteGameData extends Table.TableGameData {
         super(remainingTime);
         this.playerBetHistory = {};
         this.guaranteedWinFeature = {
-            enable: true,
+            enable: false,
             accumulatedDays: 3,
-            probabilities: [
-                { threshold: 360000, winningPercentage: 80 },
-                { threshold: 180000, winningPercentage: 60 },
-            ],
+            probabilities: [],
         };
     }
 }

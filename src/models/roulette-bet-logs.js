@@ -27,4 +27,5 @@ const schema = new mongoose.Schema({
     roundId: { type: Number, required: true },
 });
 
-export default mongoose.model("miniroulette_betlogs", schema);
+const modelName = "miniroulette1_betlogs";
+export default mongoose.model(modelName, schema);

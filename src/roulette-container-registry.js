@@ -1,12 +1,11 @@
 import awilix from "awilix";
 import { Table } from "sc-game-base";
 
-import { PlaceBetConsumer, SettleGameRoundConsumer } from "./consumers";
+import { PlaceBetConsumer, SettleGameRoundConsumer, RoundResultConsumer } from "./consumers";
 import { RouletteGameCron, RouletteProcessBetQueue } from "./crons";
 import { RouletteBets, RouletteRounds, RouletteBetLogs } from "./models";
-import RouletteHistoryQuery from "./query-apis/roulette-history-query";
 import HttpRouter from "./routers/http-router";
-
+import { RouletteBetQuery, RouletteHistoryQuery } from "./query-apis";
 const { asClass, asValue } = awilix;
 
 export default class RouletteContainerRegistry extends Table.TableContainerRegistry {
@@ -26,6 +25,7 @@ export default class RouletteContainerRegistry extends Table.TableContainerRegis
         this.container.register({
             placeBetConsumer: asClass(PlaceBetConsumer).singleton(),
             settleGameRoundConsumer: asClass(SettleGameRoundConsumer).singleton().proxy(),
+            roundResultConsumer: asClass(RoundResultConsumer).singleton().proxy(),
         });
     }
 
@@ -44,6 +44,7 @@ export default class RouletteContainerRegistry extends Table.TableContainerRegis
 
         this.container.register({
             historyQuery: asClass(RouletteHistoryQuery).singleton(),
+            betQuery: asClass(RouletteBetQuery).singleton(),
         });
     }
 

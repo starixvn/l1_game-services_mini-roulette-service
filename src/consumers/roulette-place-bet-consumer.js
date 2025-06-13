@@ -10,8 +10,8 @@ const HedgeBetGroupByType = {
 
 export default class RoulettePlaceBetConsumer extends PlaceBetConsumer {
     composeValidationCriteria(player, betChoice, amount, freeBet, roundId) {
-        const result = super.composeValidationCriteria(player, betChoice, amount, freeBet, roundId);
-        return this.composeBetCriteria(player.profile.name).concat(result);
+        const criteria = super.composeValidationCriteria(player, betChoice, amount, freeBet, roundId);
+        return this.composeBetCriteria(player.profile.name).concat(criteria);
     }
 
     composeBetCriteria(playerName) {

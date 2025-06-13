@@ -1,7 +1,5 @@
 import mongoose from "mongoose";
 
-const modelName = "miniroulette_rounds";
-
 const settlementResultSchema = new mongoose.Schema(
     {
         straightUp: { type: [String], default: [] },
@@ -27,5 +25,6 @@ const Schema = new mongoose.Schema({
     time: { type: Date, default: new Date() },
     exchangeRateId: { type: Number, required: true },
 });
+const modelName = "miniroulette1_rounds";
 
 export default mongoose.model(modelName, Schema);

@@ -36,7 +36,7 @@ export default class RouletteProcessBetQueue extends ProcessBetQueue {
 
     async handleSuccessBet(player, balance, roundId, bet) {
         await super.handleSuccessBet(player, balance, roundId, bet);
-        await this.settleGameRoundConsumer.settleRound(player.profile.name, roundId);
+        await this.settleGameRoundConsumer.settleRound(roundId);
     }
 
     resetPlayerBetTracks(playerName) {

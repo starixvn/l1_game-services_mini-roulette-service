@@ -1,39 +1,43 @@
 import { Table } from "sc-game-base";
 
 export default class RouletteSettleGameRoundConsumer extends Table.EventConsumers.TableSettleGameRoundConsumer {
+    constructor(props) {
+        super(props);
+        this.roundResultConsumer = props.roundResultConsumer;
+    }
+
     async settleOldBets() {
-        const bets = await this.betsRepository.find({ paid: false }).lean().exec();
+        const bets = await this.betsRepository.find({ paid: false }).exec();
 
         if (bets.length > 0) {
             await Promise.all(
                 bets.map(async (bet) => {
-                    const { roundId, name } = bet;
-                    await this.settleRound(name, roundId);
+                    const round = await this.findOrCreateRound(bet);
+                    round && (await this.settleBet(bet, round));
                 })
             );
         }
     }
 
-    async settleRound(playerName, roundId) {
-        const round = await this.findOrCreateRound(roundId, playerName);
-        if (round) {
-            const finish = {
-                settlementResult: round.settlementResult,
-                result: round.result,
-                roundId,
-                time: round.time,
-            };
-            await this.settleBets(finish);
+    async settleRound(roundId) {
+        const bet = await this.betsRepository.findOne({ roundId, paid: false }).exec();
+        const round = await this.findOrCreateRound(bet);
+        if (bet && round) {
+            await this.settleBet(bet, round);
         }
     }
 
-    async findOrCreateRound(roundId, playerName) {
+    async findOrCreateRound(bet) {
+        if (!bet) {
+            return null;
+        }
+        const { roundId } = bet;
         const round = await this.roundsRepository.findOne({ id: roundId }).lean().exec();
         if (round) {
             return round;
         } else {
             const { exchangeRates } = this.gameData;
-            const result = this.generateResult(playerName);
+            const result = await this.roundResultConsumer.generateResult(bet);
             const settlementResult = this.definition.settle(result);
             const newRound = {
                 id: roundId,
@@ -47,38 +51,35 @@ export default class RouletteSettleGameRoundConsumer extends Table.EventConsumer
         }
     }
 
-    generateResult(playerName) {
-        if (this.gameData.result) {
-            return this.gameData.result;
-        } else {
-            const resultFromAdmin = this.gameData.settlementResultFromAdmin;
-            const { randomMode } = this.gameData.gameConfigs;
-            const result = playerName === resultFromAdmin.playerName ? resultFromAdmin.result : this.definition.generateResult(randomMode);
-            this.gameData.settlementResultFromAdmin = {};
-            return result;
-        }
+    async settleBet(bet, round) {
+        const { id, time, result, settlementResult } = round;
+        this.userBetResultPublisher.publishToUser(bet.uid, { finish: this.collectRoundResult(result, settlementResult, id) });
+
+        const odds = bet.odds || this.gameData.gameConfigs.odds;
+        const betResult = this.calculateBetResult(settlementResult, bet, odds);
+
+        bet.betwin = betResult.totalWin;
+        bet.paid = true;
+
+        await bet.save();
+        await this.callEndGame(bet, id, time, betResult);
+
+        this.captureBetResult(bet.uid, betResult, bet.time);
+        this.userBetResultPublisher.publish(bet.uid, betResult);
     }
 
-    async settleBets({ result, settlementResult, roundId, time }) {
-        const bet = await this.betsRepository.findOne({ roundId, paid: false }).exec();
-        if (bet) {
-            const odds = bet.odds || this.gameData.gameConfigs.odds;
-            const betResult = this.calculateBetResult(settlementResult, bet, odds);
-
-            bet.betwin = betResult.totalWin;
-            bet.paid = true;
-
-            await bet.save();
-            await this.callEndGame(bet, roundId, time, betResult);
-
-            this.captureBetResult(bet.uid, betResult, bet.rate);
-            this.userBetResultPublisher.publishToUser(bet.uid, { finish: this.collectRoundResult(result, settlementResult, roundId) });
-            await this.userBetResultPublisher.publish(bet.uid, betResult);
-        }
-    }
-
-    captureBetResult(uid, betResult, rate) {
-        // nothing
+    captureBetResult(uid, betResult, time) {
+        const accumulatedDays = this.gameData.guaranteedWinFeature?.accumulatedDays ?? 3;
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() - accumulatedDays);
+        const oldBetHistory = this.gameData.playerBetHistory?.[uid] || [];
+        const newBetHistory = oldBetHistory.filter((bet) => bet.time && new Date(bet.time) >= startDate);
+        newBetHistory.push({
+            totalAmount: betResult.totalBetAmount,
+            betwin: betResult.totalWin,
+            time,
+        });
+        this.gameData.playerBetHistory[uid] = newBetHistory;
     }
 
     calculateBetResult(settlementResult, bet, odds) {

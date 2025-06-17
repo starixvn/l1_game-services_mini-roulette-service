@@ -2,11 +2,6 @@ import { helpers } from "sc-common";
 import { PlaceBetConsumer } from "sc-game-base/src/core/event-consumers";
 import notices from "../constants/notices";
 
-const HedgeBetGroupByType = {
-    oddEven: ["even", "odd"],
-    redBlack: ["red", "black"],
-};
-
 export default class RoulettePlaceBetConsumer extends PlaceBetConsumer {
     composeValidationCriteria(player, betChoice, amount, freeBet, roundId) {
         const criteria = super.composeValidationCriteria(player, betChoice, amount, freeBet, roundId);
@@ -35,8 +30,6 @@ export default class RoulettePlaceBetConsumer extends PlaceBetConsumer {
     composeBetAmountValidationCriteria(player, betChoices, totalAmount, freeBet) {
         const settings = this.gameData.currencyGroupGames.find((x) => x.groupId.toString() === player.session.currencyGroupId);
         const configs = this.gameData.gameConfigs;
-        const { betTracks } = this.gameData.ingame[player.profile.name] || { betTracks: {} };
-        const totalAmountOfExistingBets = this.calculateTotalAmount(betTracks);
         const minBet = Math.max(player.profile.minBet, settings.minBet);
         const maxBet = Math.min(player.profile.maxBet, settings.maxBet);
 
@@ -46,23 +39,19 @@ export default class RoulettePlaceBetConsumer extends PlaceBetConsumer {
                 notice: this.getNoticeObj(helpers.noticeHelper.invalidBet),
             },
             {
-                failure: this.anyChoiceExceedItsMaxBet(betChoices, betTracks, settings, player.profile.maxBet),
+                failure: this.anyChoiceExceedItsMaxBet(betChoices, settings, player.profile.maxBet),
                 notice: this.getNoticeObj(notices.maxBetOfAnyChoiceReached),
             },
             {
-                failure: this.anyChoiceBelowMinBet(betChoices, betTracks, minBet),
+                failure: this.anyChoiceBelowMinBet(betChoices, minBet),
                 notice: this.getNoticeObj(notices.betAmountOfAnyChoiceIncorrect),
             },
             {
-                failure: totalAmountOfExistingBets + totalAmount < minBet,
+                failure: totalAmount < minBet,
                 notice: this.getNoticeObj(helpers.noticeHelper.minBet, { minBet }),
             },
             {
                 failure: totalAmount > maxBet,
-                notice: this.getNoticeObj(helpers.noticeHelper.maxBet, { maxBet }),
-            },
-            {
-                failure: totalAmountOfExistingBets + totalAmount > maxBet,
                 notice: this.getNoticeObj(helpers.noticeHelper.maxBet, { maxBet }),
             },
         ];
@@ -80,33 +69,12 @@ export default class RoulettePlaceBetConsumer extends PlaceBetConsumer {
     }
 
     composeHedgeBetValidationCriteria(betChoices, player) {
-        const { betTracks } = this.gameData.ingame[player.profile.name] || { betTracks: {} };
-        let hedgeBetType = "";
-
-        Object.entries(betChoices).forEach(([typeOfBets, choicesPerType]) => {
-            const trackChoicesPerType = betTracks[typeOfBets] || {};
-            const isOnHedgeBetGroup = this.definition.hedgeBetGroups.some((group) => group === typeOfBets);
-
-            if (isOnHedgeBetGroup) {
-                const setOfUniqueBetChoice = new Set([...Object.keys(trackChoicesPerType ?? {}), ...Object.keys(choicesPerType ?? {})]);
-
-                setOfUniqueBetChoice.size > 1 && (hedgeBetType = typeOfBets);
-            }
-        });
-
-        return [
-            {
-                failure: !!hedgeBetType,
-                notice: this.getNoticeObj(helpers.noticeHelper.disallowHedgeBet, {
-                    hedgeBetGroup: HedgeBetGroupByType[hedgeBetType],
-                }),
-            },
-        ];
+        return [];
     }
 
     consume(player, payload) {
         Object.assign(payload, {
-            amount: this.calculateTotalAmount(payload.betChoices) >> 0,
+            amount: this.calculateTotalAmount(payload.betChoices),
             freeBet: payload.freeBet ?? false,
         });
 
@@ -130,29 +98,7 @@ export default class RoulettePlaceBetConsumer extends PlaceBetConsumer {
 
             this.gameData.ingame[name] = newPlayer;
         }
-
-        this.adjustBetTracks(player.profile.name, payload);
         this.gameData.ingame[name].betQueue.push({ player, payload });
-    }
-
-    adjustBetTracks(playerName, bet) {
-        const { betChoices } = bet;
-
-        if (this.gameData.ingame?.[playerName]) {
-            const playerInGame = this.gameData.ingame[playerName];
-
-            Object.entries(betChoices).forEach(([typeOfBets, choicesPerType]) => {
-                const trackChoicesPerType = playerInGame.betTracks[typeOfBets] || {};
-
-                Object.entries(choicesPerType).forEach(([betChoice, amount]) => {
-                    trackChoicesPerType[betChoice] = (trackChoicesPerType[betChoice] || 0) + amount;
-                });
-
-                if (!playerInGame.betTracks[typeOfBets]) {
-                    playerInGame.betTracks[typeOfBets] = trackChoicesPerType;
-                }
-            });
-        }
     }
 
     calculateTotalAmount(betChoices) {
@@ -183,25 +129,14 @@ export default class RoulettePlaceBetConsumer extends PlaceBetConsumer {
         });
     }
 
-    anyChoiceExceedItsMaxBet(betChoices, betTracks, configs, userMaxBet) {
+    anyChoiceExceedItsMaxBet(betChoices, configs, userMaxBet) {
         return Object.entries(betChoices).some(([typeOfBets, choicesPerType]) => {
             const maxBetPerChoice = Math.min(userMaxBet, configs.maxBetPerChoices[typeOfBets] ?? 0);
-
-            return Object.entries(choicesPerType).some(([betChoice, amount]) => {
-                const currentBetAmount = betTracks[typeOfBets]?.[betChoice] ?? 0;
-
-                return amount > maxBetPerChoice || currentBetAmount + amount > maxBetPerChoice;
-            });
+            return Object.values(choicesPerType).some((amount) => amount > maxBetPerChoice);
         });
     }
 
-    anyChoiceBelowMinBet(betChoices, betTracks, minBet) {
-        return Object.entries(betChoices).some(([typeOfBets, choicesPerType]) => {
-            return Object.entries(choicesPerType).some(([betChoice, amount]) => {
-                const currentBetAmount = betTracks[typeOfBets]?.[betChoice] ?? 0;
-
-                return currentBetAmount + amount < minBet || amount < minBet;
-            });
-        });
+    anyChoiceBelowMinBet(betChoices, minBet) {
+        return Object.values(betChoices).some((choicesPerType) => Object.values(choicesPerType).some((amount) => amount < minBet));
     }
 }

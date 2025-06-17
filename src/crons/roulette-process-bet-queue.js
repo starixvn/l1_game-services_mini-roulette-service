@@ -1,5 +1,5 @@
 import { ProcessBetQueue } from "sc-game-base/src/core/crons";
-import { trackBetChoices, buildBetAmountIncrement } from "../helpers/choice-helper";
+import { buildBetAmountIncrement } from "../helpers/choice-helper";
 
 export default class RouletteProcessBetQueue extends ProcessBetQueue {
     constructor({

@@ -14,7 +14,7 @@ export default class RouletteInGameConsumer extends Core.BaseEventConsumers.InGa
     async buildPayload(realPlayer) {
         await this.getBalance(realPlayer, true);
         const { odds, originalOdds, enableFreeBet, boostedChoices } = this.gameData.gameConfigs;
-        const { roundId, exchangeRates } = this.gameData;
+        const { exchangeRates } = this.gameData;
         const { session } = realPlayer;
         const rate = exchangeRates.code[session.currencyCode] * session.multiplier;
         const settings = this.gameData.currencyGroupGames.find((x) => x.groupId.toString() === session.currencyGroupId);
@@ -23,10 +23,8 @@ export default class RouletteInGameConsumer extends Core.BaseEventConsumers.InGa
         const user = await this.getUserInfo(realPlayer.UID);
 
         return {
-            roundId,
             gameConfigs,
             roundHistory,
-            ownBets: {},
             user: { ...user, rate },
         };
     }

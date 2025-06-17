@@ -4,7 +4,6 @@ import notices from "../constants/notices";
 
 const HedgeBetGroupByType = {
     oddEven: ["even", "odd"],
-    bigSmall: ["small", "big"],
     redBlack: ["red", "black"],
 };
 

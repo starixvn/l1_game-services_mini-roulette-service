@@ -20,7 +20,6 @@ const extractBetTypes = (bet) => {
         ...processBetType(betTypes.dozen, bet[betTypes.dozen]),
         ...processBetType(betTypes.redBlack, bet[betTypes.redBlack]),
         ...processBetType(betTypes.oddEven, bet[betTypes.oddEven]),
-        ...processBetType(betTypes.bigSmall, bet[betTypes.bigSmall]),
     ];
 };
 
@@ -30,9 +29,10 @@ const isWinningNumber = (number, betType, choice) => {
     switch (betType) {
         case betTypes.straightUp:
             return number === +choice;
-        case betTypes.dozen:
+        case betTypes.dozen: {
             const start = (+choice - 1) * 12 + 1;
             return number >= start && number < start + 12;
+        }
         case betTypes.redBlack:
             if (choice === "red") return numberWheel.red.includes(number);
             if (choice === "black") return numberWheel.black.includes(number);

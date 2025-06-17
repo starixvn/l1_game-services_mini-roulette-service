@@ -10,6 +10,5 @@ export default {
         dozen: "dozen",
         redBlack: "redBlack",
         oddEven: "oddEven",
-        bigSmall: "bigSmall",
     },
 };

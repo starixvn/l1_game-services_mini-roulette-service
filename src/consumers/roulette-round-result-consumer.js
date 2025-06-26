@@ -5,8 +5,8 @@ export default class RouletteWinFeatureConsumer {
         this.betsRepository = betsRepository;
     }
 
-    async getAccumulatedLostAmount(uid) {
-        if (!this.gameData.playerBetHistory || !this.gameData.playerBetHistory[uid]) {
+    async getAccumulatedAmount(uid) {
+        if (!this.gameData.playerBetHistory?.[uid]) {
             return 0;
         }
 
@@ -17,13 +17,31 @@ export default class RouletteWinFeatureConsumer {
         return this.gameData.playerBetHistory[uid]
             .filter((bet) => bet.time && new Date(bet.time) >= startDate)
             .reduce((total, bet) => {
-                return total + (bet.totalAmount || 0) - (bet.betwin || 0);
+                return total + (bet.betwin || 0) - (bet.totalAmount || 0);
             }, 0);
     }
 
-    getWinningPercentage(accumulatedLostAmount) {
-        const { probabilities } = this.gameData.guaranteedWinFeature;
-        const probability = probabilities.sort((a, b) => b.threshold - a.threshold).find((p) => accumulatedLostAmount >= p.threshold);
+    getGuaranteedConfig(accumulatedAmount) {
+        return accumulatedAmount < 0 ? this.gameData.guaranteedWinFeature : this.gameData.guaranteeLossFeature;
+    }
+
+    getFloatingValue(config) {
+        return config?.floating ? Math.floor(Math.random() * (config.floating * 2 + 1) - config.floating) / 100 : 0;
+    }
+
+    isReachedThreshold(accumulatedAmount, config, floatingValue) {
+        if (config?.enable) {
+            const { probabilities } = config;
+            return probabilities?.some((p) => Math.abs(accumulatedAmount) >= p.threshold + floatingValue * p.threshold);
+        }
+        return false;
+    }
+
+    getWinningPercentage(accumulatedAmount, config, floatingValue) {
+        const { probabilities } = config;
+        const probability = probabilities
+            .sort((a, b) => b.threshold - a.threshold)
+            .find((p) => Math.abs(accumulatedAmount) >= p.threshold + floatingValue * p.threshold);
         return probability?.winningPercentage ?? 0;
     }
 
@@ -33,10 +51,11 @@ export default class RouletteWinFeatureConsumer {
         if (resultFromAdmin) {
             return resultFromAdmin;
         }
-        const accumulatedLostAmount = await this.getAccumulatedLostAmount(uid);
-        const { probabilities, enable } = this.gameData.guaranteedWinFeature;
-        if (enable && probabilities?.some((p) => accumulatedLostAmount >= p.threshold)) {
-            const winningPercentage = this.getWinningPercentage(accumulatedLostAmount);
+        const accumulatedAmount = await this.getAccumulatedAmount(uid);
+        const config = this.getGuaranteedConfig(accumulatedAmount);
+        const floatingValue = this.getFloatingValue(config);
+        if (this.isReachedThreshold(accumulatedAmount, config, floatingValue)) {
+            const winningPercentage = this.getWinningPercentage(accumulatedAmount, config, floatingValue);
             return this.definition.controlResultByBet(bet, winningPercentage);
         }
 

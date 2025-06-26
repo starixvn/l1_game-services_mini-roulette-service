@@ -120,7 +120,6 @@ export default class RoulettePlaceBetConsumer extends PlaceBetConsumer {
     anyInvalidChoice(betChoices, validBetChoices) {
         return Object.entries(betChoices).some(([typeOfBets, choicesPerType]) => {
             const validBetChoicesPerType = validBetChoices[typeOfBets];
-
             if (!validBetChoicesPerType) {
                 return true;
             }
@@ -131,7 +130,7 @@ export default class RoulettePlaceBetConsumer extends PlaceBetConsumer {
 
     anyChoiceExceedItsMaxBet(betChoices, configs, userMaxBet) {
         return Object.entries(betChoices).some(([typeOfBets, choicesPerType]) => {
-            const maxBetPerChoice = Math.min(userMaxBet, configs.maxBetPerChoices[typeOfBets] ?? 0);
+            const maxBetPerChoice = Math.min(userMaxBet, configs?.maxBetPerChoices?.[typeOfBets] ?? 0);
             return Object.values(choicesPerType).some((amount) => amount > maxBetPerChoice);
         });
     }

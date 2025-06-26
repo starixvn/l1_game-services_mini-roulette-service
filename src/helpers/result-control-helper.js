@@ -87,21 +87,59 @@ const calculateAllNumberResults = (bet) => {
     return results.sort((a, b) => b.profit - a.profit);
 };
 
+/**
+ * Adjusts winning percentage based on winning results
+ * @param {number} baseWinningPercentage - The base winning percentage (0-100)
+ * @param {Array} allResults - Array of number results with profit
+ * @returns {number} - Adjusted winning percentage
+ */
+const adjustWinningPercentageForBetTypes = (baseWinningPercentage, allResults) => {
+    const winningResults = allResults.filter((result) => result.profit > 0);
+    const naturalProbability = winningResults.length / (Constants.numberWheel.max + 1);
+    const adjustmentFactor = naturalProbability / 0.5;
+    const adjustedPercentage = baseWinningPercentage * adjustmentFactor;
+
+    // Clamp the result between 0 and 100
+    return Math.max(0, Math.min(100, adjustedPercentage));
+};
+
+const createWinningNumberPool = (allResults) => {
+    // Get profitable numbers, fallback to break-even numbers if none profitable
+    const profitableResults = allResults.filter((result) => result.profit > 0);
+    if (profitableResults.length === 0) {
+        return allResults.filter((result) => result.profit === 0).map((result) => result.number);
+    }
+
+    // Normalize weights to create meaningful selection probabilities
+    const maxProfit = Math.max(...profitableResults.map((result) => result.profit));
+    const normalizedWeightedNumbers = profitableResults.map((item) => ({
+        number: item.number,
+        normalizedWeight: maxProfit / item.profit,
+    }));
+
+    // Create selection pool with repeated numbers based on weight
+    const selectionPool = [];
+    normalizedWeightedNumbers.forEach((item) => {
+        for (let i = 0; i < item.normalizedWeight; i++) {
+            selectionPool.push(item.number);
+        }
+    });
+    const chance = new Chance();
+    return chance.shuffle(selectionPool);
+};
+
 export const controlResultByBet = (bet, winningPercentage) => {
     const chance = new Chance();
-    const shouldWin = chance.bool({ likelihood: winningPercentage });
-
-    // Calculate results for all numbers
     const allResults = calculateAllNumberResults(bet);
-    // Split numbers into winning (profit > 0) and losing (profit <= 0) groups
-    const winningNumbers = allResults.filter((result) => result.profit > 0).map((result) => result.number);
-    const losingNumbers = allResults.filter((result) => result.profit <= 0).map((result) => result.number);
+    const adjustedWinningPercentage = adjustWinningPercentageForBetTypes(winningPercentage, allResults);
+    const shouldWin = chance.bool({ likelihood: adjustedWinningPercentage });
+    const expectedNumbers = shouldWin
+        ? createWinningNumberPool(allResults)
+        : allResults.filter((result) => result.profit <= 0).map((result) => result.number);
 
-    // If there are no winning or losing numbers, return a random number
-    if (winningNumbers.length === 0 || losingNumbers.length === 0) {
+    if (expectedNumbers.length === 0) {
         return chance.integer({ min: Constants.numberWheel.min, max: Constants.numberWheel.max });
     }
 
-    // Pick from either winning or losing numbers based on winningPercentage
-    return chance.pickone(shouldWin ? winningNumbers : losingNumbers);
+    return chance.pickone(expectedNumbers);
 };

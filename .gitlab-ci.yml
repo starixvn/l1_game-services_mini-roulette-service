@@ -1,7 +1,17 @@
 variables:
   SMOKE_PRODUCT_NAME: MiniRoulette
+  ENABLE_NODEJS_INTEGRATION_TEST: 'true'
+  NODEJS_INTEGRATION_TEST_IMAGE_VERSION: hub.lumigame.com/base/node:20.9.0-alpine
+  NODEJS_INTEGRATION_TEST_DB_IMAGE_VERSION: hub.lumigame.com/docker-hub/library/mongo:4.4.8
 
 include:
   - project: ci/core-cicd
     ref: main
     file: luminet.gitlab-ci.yml
+
+integration_test_js:
+  before_script:
+  - cp ./src/app-configs.IGT.ts ./src/app-configs.IGT.original.ts
+  - cp ./configs/app-configs.IGT.ts ./src/app-configs.IGT.ts
+  - npm set registry $NPM_LUMI_HOST
+  - yarn install

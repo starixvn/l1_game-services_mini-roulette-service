@@ -2,19 +2,19 @@ export default {
     hostingPort: 5000,
     apiSettings: {
         enabledApi: true,
-        apiUrl: "https://l2-proxy1.lumigame.com/game-api",
-        authUrl: "http://l2-auth1.lumigame.com",
+        apiUrl: "http://l2-game-api-klprod-service:5000",
+        authUrl: "http://l2-auth-api-klprod-service:5000",
         client: {
             id: "game-server",
             secret: "gameserver@20luminet&",
         },
         useAuthenticate: true,
-        requestTimeout: 10000,
         placeBetTimeout: 4000,
+        requestTimeout: 10000, // 10s
         enabledApiLogs: true,
     },
     authenticateSettings: {
-        url: "http://l2-auth1.lumigame.com",
+        url: "http://l2-auth-api-klprod-service:5000",
         id: "game-services",
         secret: "gameservices@20luminet&",
         requestTimeout: 10000,
@@ -22,7 +22,7 @@ export default {
         audiences: ["api", "admin-api"],
     },
     userServiceSettings: {
-        url: "https://l2-proxy1.lumigame.com/user",
+        url: "http://l2-user-service-klprod-service:5000",
     },
     socketOptions: {
         pingInterval: 60 * 1000,
@@ -33,7 +33,7 @@ export default {
     },
     enabledLogs: true,
     database: {
-        url: "mongodb://lmn_backend:LmnBackend@10.10.50.12:39201,10.10.50.13:39201,10.10.50.14:39201/?replicaSet=L2pLocal&appName=MiniRoulette",
+        url: "mongodb://lmn_backend:%21%23x97%25uYZv%2A%5E%25%3E%7C%2Aqg%40E7FHi%3F9l%7B9r%3CK@10.146.34.26:39210,10.146.34.27:39210,10.146.34.30:39210,10.146.34.28:39210/?replicaSet=L2_SabaMain&appName=MiniRoulette",
         options: {
             dbName: "minigame",
             useNewUrlParser: true,
@@ -42,12 +42,18 @@ export default {
         },
     },
     sentry: {
-        sentryUrl: "https://13f39b8359404ed5aec23655e64ccf78@sentry.lumigame.com/2",
+        sentryUrl: "http://2b5b82bf699543ddb296364568bc30be@sentry-scklprod-ovs.ops-klprod.gamora.prod/52",
         logIdentifier: "mini-roulette",
-        env: "DEV",
+        env: "PROD",
     },
-    adminSecretKey: "asWDEerfOIdgsdqRTFabvmgh",
-    chips: [1000, 500, 200, 100, 50, 10, 5, 1],
-    maxQuickBets: 5,
-    disableCors: true,
+    adminSecretKey: "asWDEer4yGdgsdqR4uqmKQZgh",
+    metrics: {
+        enable: true,
+        secretKey: "30d15293-c7de-4c77-9293-b85d6c5bfe1a",
+    },
+    enableMsgpackParser: true,
+    gameManagementApiSettings: {
+        BASE: "http://l2-game-management-service-klprod-service:5000",
+    },
+    disableSetResult: true,
 };

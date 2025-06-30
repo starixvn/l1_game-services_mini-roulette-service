@@ -1,7 +1,11 @@
 import { Table } from "sc-game-base";
 
 export class RouletteGameData extends Table.TableGameData {
-    constructor(remainingTime) {
+    playerBetHistory: Record<string, any>;
+    guaranteedWinFeature: any;
+    guaranteeLossFeature: any;
+
+    constructor(remainingTime: number) {
         super(remainingTime);
         this.playerBetHistory = {};
         this.guaranteedWinFeature = {

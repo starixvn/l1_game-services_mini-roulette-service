@@ -51,8 +51,9 @@ export default {
         secretKey: "6c1f0f28-70f2-46ae-b031-22624a6cd8df",
     },
     enableMsgpackParser: true,
-    chips: [20_000_000, 10_000_000, 5_000_000, 1_000_000, 500_000, 200_000, 100_000, 50_000, 20_000, 10_000],
-    maxQuickBets: 100_000,
+    gameManagementApiSettings: {
+        BASE: "http://l2-game-management-service-sit-service:5000",
+    },
     otel: {
         system: "VG",
         enabled: false,

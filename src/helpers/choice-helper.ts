@@ -2,11 +2,11 @@ import Constants from "../constants";
 
 const numberOfColumns = 12;
 
-const listWinningChoicesOfStraightUp = (number) => [number.toString()];
+const listWinningChoicesOfStraightUp = (number: number) => [number.toString()];
 
-const listWinningChoicesOfDozen = (number) => (number > 0 ? [(~~((number - 1) / numberOfColumns) + 1).toString()] : []);
+const listWinningChoicesOfDozen = (number: number) => (number > 0 ? [(~~((number - 1) / numberOfColumns) + 1).toString()] : []);
 
-const listWinningChoicesOfRedBlack = (number) => {
+const listWinningChoicesOfRedBlack = (number: number) => {
     if (Constants.numberWheel.red.includes(number)) {
         return ["red"];
     }
@@ -18,7 +18,7 @@ const listWinningChoicesOfRedBlack = (number) => {
     return [];
 };
 
-const listWinningChoicesOfOddEven = (number) => {
+const listWinningChoicesOfOddEven = (number: number) => {
     if (number !== 0) {
         return number % 2 === 0 ? ["even"] : ["odd"];
     }
@@ -26,7 +26,7 @@ const listWinningChoicesOfOddEven = (number) => {
     return [];
 };
 
-export const generateChoiceByNumber = (number) => {
+export const generateChoiceByNumber = (number: number) => {
     return {
         straightUp: listWinningChoicesOfStraightUp(number),
         dozen: listWinningChoicesOfDozen(number),
@@ -38,10 +38,10 @@ export const generateChoiceByNumber = (number) => {
 export const getBetChoicesGroupByNumbers = () =>
     [...Array(Constants.numberWheel.max + 1).keys()].map((number) => generateChoiceByNumber(number));
 
-export const getBetChoicesGroupByTypes = () => {
+export const getBetChoicesGroupByTypes = (): Record<string, string[]> => {
     const betChoices = getBetChoicesGroupByNumbers();
 
-    const draftResult = betChoices.reduce((groupByTypes, choicesPerNumber) => {
+    const draftResult = betChoices.reduce((groupByTypes: Record<string, string[]>, choicesPerNumber) => {
         Object.entries(choicesPerNumber).forEach(([type, choices]) => {
             groupByTypes[type] = (groupByTypes[type] ?? []).concat(choices);
         });
@@ -49,15 +49,15 @@ export const getBetChoicesGroupByTypes = () => {
         return groupByTypes;
     }, {});
 
-    return Object.entries(draftResult).reduce((sortedResult, [type, choices]) => {
+    return Object.entries(draftResult).reduce((sortedResult: Record<string, string[]>, [type, choices]) => {
         sortedResult[type] = Array.from(new Set(choices)).sort();
 
         return sortedResult;
     }, {});
 };
 
-export const buildBetAmountIncrement = (betChoices) => {
-    const increment = {};
+export const buildBetAmountIncrement = (betChoices: Record<string, Record<string, number>>) => {
+    const increment: Record<string, number> = {};
 
     Object.entries(betChoices).forEach(([typeOfBets, choicesPerType]) => {
         Object.entries(choicesPerType).forEach(([betChoice, amount]) => {

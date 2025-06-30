@@ -1,7 +1,10 @@
 import { Core } from "sc-game-base";
+import { RouletteRoundQuery } from "../query-apis";
 
 export default class RouletteInGameConsumer extends Core.BaseEventConsumers.InGameConsumer {
-    async consume(realPlayer) {
+    declare roundQuery: RouletteRoundQuery;
+
+    async consume(realPlayer: any) {
         const { remainingTime, gameConfigs, umMessages } = this.gameData;
         const disabled = !gameConfigs || !gameConfigs.enabled;
         if (disabled) {
@@ -11,7 +14,7 @@ export default class RouletteInGameConsumer extends Core.BaseEventConsumers.InGa
         realPlayer.socketClient.emit(this.definition.name, payload);
     }
 
-    async buildPayload(realPlayer) {
+    async buildPayload(realPlayer: any): Promise<any> {
         await this.getBalance(realPlayer, true);
         const { odds, originalOdds, enableFreeBet, boostedChoices } = this.gameData.gameConfigs;
         const { exchangeRates } = this.gameData;

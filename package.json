@@ -2,15 +2,16 @@
     "name": "mini-roulette-service",
     "version": "1.0.0",
     "description": "",
-    "main": "./src/app.js",
+    "main": "./build/app.js",
     "scripts": {
-        "test": "jest",
-        "test-coverage": "jest --collect-coverage",
-        "dev": "nodemon --es-module-specifier-resolution=node --watch ./src ./src/app.js",
-        "debug": "nodemon --es-module-specifier-resolution=node --watch ./ --inspect ./src/app.js",
-        "prod": "node --max-old-space-size=8192 --es-module-specifier-resolution=node ./src/app.js",
-        "reg": "npm set registry http://npm.lumigame.com",
-        "stats": "nodemon --es-module-specifier-resolution=node --watch ./tests ./tests/results.js"
+        "build": "tsc -p tsconfig.build.json",
+        "test": "jest --testPathPattern=tests/unit-tests/ ",
+        "test-coverage": "jest --collect-coverage --testPathPattern=tests/unit-tests/",
+        "integration-test": "npm run build && jest --config ./jest.integration-test.config.cjs --testPathPattern=tests/integration-tests/ --detectOpenHandles --forceExit",
+        "dev": "tsx watch ./src/app.ts",
+        "dev-build": "nodemon --experimental-loader=extensionless --experimental-specifier-resolution=node --watch ./build ./build/app.js",
+        "stats": "tsx watch ./rtp/index.ts",
+        "reg": "npm set registry http://npm.lumigame.com"
     },
     "jestSonar": {
         "reportPath": "reports",
@@ -21,31 +22,44 @@
     "license": "ISC",
     "type": "module",
     "dependencies": {
+        "awilix": "^8.0.0",
         "chance": "^1.1.7",
+        "extensionless": "1.9.6",
         "lodash": "^4.17.19",
-        "nodemon": "^2.0.4",
+        "mongoose": "5.13.20",
         "random": "^3.0.3",
         "random-int": "^3.0.0",
         "random-js": "^2.1.0",
-        "sc-game-base": "4.1.0",
-        "sc-instrument": "1.1.1"
+        "sc-game-base": "5.4.0"
     },
     "resolutions": {
-        "sc-base-apis": "1.18.2",
-        "sc-base-database": "1.11.1"
+        "sc-base-apis": "1.18.2"
     },
     "devDependencies": {
-        "@babel/preset-env": "^7.12.11",
-        "@commitlint/cli": "^9.1.2",
-        "@commitlint/config-conventional": "^9.1.2",
-        "@types/jest": "^26.0.20",
-        "babel-jest": "^26.6.3",
-        "husky": "^4.2.5",
-        "install": "^0.13.0",
-        "jest": "^26.6.3",
-        "jest-extended": "^0.11.5",
-        "jest-micro-auto-stub": "^1.0.6",
-        "jest-sonar-reporter": "^2.0.0"
+        "@babel/preset-env": "^7.23.9",
+        "@commitlint/cli": "^18.6.0",
+        "@commitlint/config-conventional": "^18.6.0",
+        "@types/chance": "^1.1.6",
+        "@types/d3-array": "^3.2.1",
+        "@types/jest": "^29.5.12",
+        "@types/lodash": "^4.17.16",
+        "@types/sc-common": "^1.0.0",
+        "@types/sc-game-base": "^1.0.0",
+        "@types/sc-game-service-integration-utils": "1.0.0",
+        "@types/socket.io": "^3.0.2",
+        "husky": "^9.0.6",
+        "jest": "^29.7.0",
+        "jest-auto-stub": "^1.0.8",
+        "jest-junit": "^16.0.0",
+        "jest-micro-auto-stub": "^1.0.9",
+        "jest-sonar-reporter": "^2.0.0",
+        "nodemon": "^3.0.3",
+        "sc-base-database": "^2.2.0",
+        "sc-game-management-client": "^0.1.0",
+        "sc-game-service-integration-utils": "^2.1.0",
+        "ts-jest": "^29.1.2",
+        "tsx": "^4.7.0",
+        "typescript": "^5.3.3"
     },
     "husky": {
         "hooks": {

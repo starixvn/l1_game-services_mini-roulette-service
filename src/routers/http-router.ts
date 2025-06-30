@@ -1,13 +1,14 @@
+import { Response, Request } from "express";
 import { Table } from "sc-game-base";
 
 export default class HttpRouter extends Table.Routers.TableHttpRouter {
-    init(app) {
+    init(app: any) {
         super.init(app);
         app.post("/api/set-result", this.handleSetResult());
     }
 
     handleSetResult() {
-        return async (req, res) => {
+        return async (req: Request, res: Response) => {
             if (this.appConfigs.disableSetResult || this.appConfigs.sentry.env === "PROD") {
                 res.sendStatus(404);
                 return;

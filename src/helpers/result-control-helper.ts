@@ -1,29 +1,43 @@
 import Chance from "chance";
 import Constants from "../constants";
+import { RouletteBet } from "../types";
 
-const extractBetTypes = (bet) => {
+type ExtractBetTypes = {
+    betType: string;
+    choice: string;
+    amount: number;
+    odds: number;
+};
+type NumberResult = {
+    number: number;
+    totalPayout: number;
+    profit: number;
+    winningBets: ExtractBetTypes[];
+};
+
+const extractBetTypes = (bet: RouletteBet) => {
     const { betTypes } = Constants;
 
-    const processBetType = (betType, betData) => {
+    const processBetType = (betType: string, betData: Record<string, number> | undefined) => {
         if (!betData) return [];
 
         return Object.entries(betData).map(([choice, amount]) => ({
             betType,
             choice,
             amount,
-            odds: bet.odds[betType],
+            odds: bet.odds?.[betType] ?? 1,
         }));
     };
 
     return [
-        ...processBetType(betTypes.straightUp, bet[betTypes.straightUp]),
-        ...processBetType(betTypes.dozen, bet[betTypes.dozen]),
-        ...processBetType(betTypes.redBlack, bet[betTypes.redBlack]),
-        ...processBetType(betTypes.oddEven, bet[betTypes.oddEven]),
+        ...processBetType(betTypes.straightUp, (bet as any)[betTypes.straightUp]),
+        ...processBetType(betTypes.dozen, (bet as any)[betTypes.dozen]),
+        ...processBetType(betTypes.redBlack, (bet as any)[betTypes.redBlack]),
+        ...processBetType(betTypes.oddEven, (bet as any)[betTypes.oddEven]),
     ];
 };
 
-const isWinningNumber = (number, betType, choice) => {
+const isWinningNumber = (number: number, betType: string, choice: string) => {
     const { numberWheel, betTypes } = Constants;
 
     switch (betType) {
@@ -42,19 +56,14 @@ const isWinningNumber = (number, betType, choice) => {
             if (choice === "odd") return number % 2 === 1;
             if (choice === "even") return number % 2 === 0;
             return false;
-        case betTypes.bigSmall:
-            if (number === 0) return false;
-            if (choice === "big") return number > 18;
-            if (choice === "small") return number <= 18;
-            return false;
         default:
             return false;
     }
 };
 
-const calculateNumberResults = (bets, number) => {
+const calculateNumberResults = (bets: ExtractBetTypes[], number: number) => {
     let totalPayout = 0;
-    const winningBets = [];
+    const winningBets: (ExtractBetTypes & { payout: number })[] = [];
 
     bets.forEach((bet) => {
         if (isWinningNumber(number, bet.betType, bet.choice)) {
@@ -75,7 +84,7 @@ const calculateNumberResults = (bets, number) => {
     };
 };
 
-const calculateAllNumberResults = (bet) => {
+const calculateAllNumberResults = (bet: RouletteBet): NumberResult[] => {
     const { numberWheel } = Constants;
     const bets = extractBetTypes(bet);
 
@@ -87,13 +96,7 @@ const calculateAllNumberResults = (bet) => {
     return results.sort((a, b) => b.profit - a.profit);
 };
 
-/**
- * Adjusts winning percentage based on winning results
- * @param {number} baseWinningPercentage - The base winning percentage (0-100)
- * @param {Array} allResults - Array of number results with profit
- * @returns {number} - Adjusted winning percentage
- */
-const adjustWinningPercentageForBetTypes = (baseWinningPercentage, allResults) => {
+const adjustWinningPercentageForBetTypes = (baseWinningPercentage: number, allResults: NumberResult[]) => {
     const winningResults = allResults.filter((result) => result.profit > 0);
     const naturalProbability = winningResults.length / (Constants.numberWheel.max + 1);
     const adjustmentFactor = naturalProbability / 0.5;
@@ -103,7 +106,7 @@ const adjustWinningPercentageForBetTypes = (baseWinningPercentage, allResults) =
     return Math.max(0, Math.min(100, adjustedPercentage));
 };
 
-const createWinningNumberPool = (allResults) => {
+const createWinningNumberPool = (allResults: NumberResult[]) => {
     // Get profitable numbers, fallback to break-even numbers if none profitable
     const profitableResults = allResults.filter((result) => result.profit > 0);
     if (profitableResults.length === 0) {
@@ -118,7 +121,7 @@ const createWinningNumberPool = (allResults) => {
     }));
 
     // Create selection pool with repeated numbers based on weight
-    const selectionPool = [];
+    const selectionPool: number[] = [];
     normalizedWeightedNumbers.forEach((item) => {
         for (let i = 0; i < item.normalizedWeight; i++) {
             selectionPool.push(item.number);
@@ -128,7 +131,7 @@ const createWinningNumberPool = (allResults) => {
     return chance.shuffle(selectionPool);
 };
 
-export const controlResultByBet = (bet, winningPercentage) => {
+export const controlResultByBet = (bet: RouletteBet, winningPercentage: number) => {
     const chance = new Chance();
     const allResults = calculateAllNumberResults(bet);
     const adjustedWinningPercentage = adjustWinningPercentageForBetTypes(winningPercentage, allResults);

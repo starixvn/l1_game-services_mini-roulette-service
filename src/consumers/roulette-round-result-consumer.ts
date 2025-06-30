@@ -1,11 +1,27 @@
+import mongoose from "mongoose";
+import { RouletteGameData } from "../roulette-game-data";
+import RouletteGameDefinition from "../roulette-game-definition";
+import { RouletteBet } from "../types";
+
 export default class RouletteWinFeatureConsumer {
-    constructor({ definition, gameData, betsRepository }) {
+    declare definition: RouletteGameDefinition;
+    declare gameData: RouletteGameData;
+    declare betsRepository: mongoose.Model<RouletteBet>;
+    constructor({
+        definition,
+        gameData,
+        betsRepository,
+    }: {
+        definition: RouletteGameDefinition;
+        gameData: RouletteGameData;
+        betsRepository: any;
+    }) {
         this.definition = definition;
         this.gameData = gameData;
-        this.betsRepository = betsRepository;
+        this.betsRepository = betsRepository as any;
     }
 
-    async getAccumulatedAmount(uid) {
+    async getAccumulatedAmount(uid: string) {
         if (!this.gameData.playerBetHistory?.[uid]) {
             return 0;
         }
@@ -15,39 +31,39 @@ export default class RouletteWinFeatureConsumer {
         startDate.setDate(startDate.getDate() - accumulatedDays);
 
         return this.gameData.playerBetHistory[uid]
-            .filter((bet) => bet.time && new Date(bet.time) >= startDate)
-            .reduce((total, bet) => {
+            .filter((bet: RouletteBet) => bet.time && new Date(bet.time) >= startDate)
+            .reduce((total: number, bet: RouletteBet) => {
                 return total + (bet.betwin || 0) - (bet.totalAmount || 0);
             }, 0);
     }
 
-    getGuaranteedConfig(accumulatedAmount) {
+    getGuaranteedConfig(accumulatedAmount: number) {
         return accumulatedAmount < 0 ? this.gameData.guaranteedWinFeature : this.gameData.guaranteeLossFeature;
     }
 
-    getFloatingValue(config) {
+    getFloatingValue(config: any) {
         return config?.floating ? Math.floor(Math.random() * (config.floating * 2 + 1) - config.floating) / 100 : 0;
     }
 
-    isReachedThreshold(accumulatedAmount, config, floatingValue) {
+    isReachedThreshold(accumulatedAmount: number, config: any, floatingValue: number) {
         if (config?.enable) {
             const { probabilities } = config;
-            return probabilities?.some((p) => Math.abs(accumulatedAmount) >= p.threshold + floatingValue * p.threshold);
+            return probabilities?.some((p: any) => Math.abs(accumulatedAmount) >= p.threshold + floatingValue * p.threshold);
         }
         return false;
     }
 
-    getWinningPercentage(accumulatedAmount, config, floatingValue) {
+    getWinningPercentage(accumulatedAmount: number, config: any, floatingValue: number) {
         const { probabilities } = config;
         const probability = probabilities
-            .sort((a, b) => b.threshold - a.threshold)
-            .find((p) => Math.abs(accumulatedAmount) >= p.threshold + floatingValue * p.threshold);
+            .sort((a: any, b: any) => b.threshold - a.threshold)
+            .find((p: any) => Math.abs(accumulatedAmount) >= p.threshold + floatingValue * p.threshold);
         return probability?.winningPercentage ?? 0;
     }
 
-    async generateResult(bet) {
+    async generateResult(bet: RouletteBet) {
         const { name, uid } = bet;
-        const resultFromAdmin = this.getResultFromAdmin(name, uid);
+        const resultFromAdmin = this.getResultFromAdmin(name);
         if (resultFromAdmin) {
             return resultFromAdmin;
         }
@@ -63,7 +79,7 @@ export default class RouletteWinFeatureConsumer {
         return this.definition.generateResult(randomMode);
     }
 
-    getResultFromAdmin(playerName) {
+    getResultFromAdmin(playerName: string) {
         const resultFromAdmin = this.gameData.settlementResultFromAdmin;
         if (playerName === resultFromAdmin.playerName) {
             this.gameData.settlementResultFromAdmin = {};

@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+        "outDir": "./build",
+        "target": "ESNext",
+        "types": ["node", "jest"],
+        "module": "ESNext",
+        "moduleResolution": "Node",
+        "esModuleInterop": true,
+        "strict": true,
+        "skipLibCheck": true
+    },
+    "include": ["**/*.ts", "configs/**/*.js", "tests/integration-tests/global-teardown.cjs", "tests/integration-tests/global-setup.cjs"],
+    "exclude": ["node_modules"]
+}

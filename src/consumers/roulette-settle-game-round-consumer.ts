@@ -1,14 +1,15 @@
 import { Table } from "sc-game-base";
+import { SettlementResult } from "../types";
 
 export default class RouletteSettleGameRoundConsumer extends Table.EventConsumers.TableSettleGameRoundConsumer {
-    calculateBetResult(settlementResult, bet, odds, roundResult) {
-        const betResult = Object.entries(settlementResult).reduce(
+    calculateBetResult(settlementResult: any, bet: any, odds: Record<string, number>) {
+        const betResult = Object.entries(settlementResult as SettlementResult).reduce(
             (result, [typeOfBets, winningChoices]) => {
-                const choicesPerType = bet[typeOfBets];
+                const choicesPerType = bet[typeOfBets] as Record<string, number>;
 
                 if (choicesPerType) {
                     const oddsOfType = odds[typeOfBets] ?? 0;
-                    const winningByChoicesOfType = {};
+                    const winningByChoicesOfType: Record<string, number> = {};
 
                     Object.entries(choicesPerType).forEach(([betChoice, betAmount]) => {
                         const win = winningChoices.includes(betChoice);
@@ -39,7 +40,7 @@ export default class RouletteSettleGameRoundConsumer extends Table.EventConsumer
                 totalWin: 0,
                 netWin: 0,
                 totalLost: 0,
-                winningByChoices: {},
+                winningByChoices: {} as Record<string, Record<string, number>>,
             }
         );
 

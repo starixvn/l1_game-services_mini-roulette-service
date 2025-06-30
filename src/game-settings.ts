@@ -15,6 +15,12 @@ export default {
     },
     choicesMapper: {},
     defaultBetTracks: {},
-    numberOfRoundHistory: 300,
-    hedgeBetGroups: ["oddEven", "bigSmall", "redBlack"],
+    numberOfRoundHistory: 100,
+    hedgeBetGroups: [],
+    botSettings: {
+        ratio: { mainOptions: 90, dozenOptions: 8, straightUpOptions: 2 },
+        mainOptions: ["oddEven", "redBlack"],
+        dozenOptions: ["dozen"],
+        straightUpOptions: ["straightUp"],
+    },
 };

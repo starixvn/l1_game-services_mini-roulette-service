@@ -10,7 +10,7 @@ export default {
         },
         useAuthenticate: true,
         requestTimeout: 10000,
-        placeBetTimeout: 4000,
+        placeBetTimeout: 2000,
         enabledApiLogs: true,
     },
     authenticateSettings: {
@@ -51,8 +51,9 @@ export default {
         enable: true,
         secretKey: "6c1f0f28-70f2-46ae-b031-22624a6cd8df",
     },
-    chips: [1000, 500, 200, 100, 50, 10, 5, 1],
-    maxQuickBets: 5,
+    gameManagementApiSettings: {
+        BASE: "http://l1-game-management-service-local3-service:5000",
+    },
     otel: {
         system: "SG",
         enabled: true,

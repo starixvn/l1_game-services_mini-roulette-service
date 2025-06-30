@@ -1,14 +1,15 @@
 import { Table } from "sc-game-base";
 import { trackBetChoices, buildBetAmountIncrement } from "../helpers/choice-helper";
+import { RouletteBet, RouletteBetLog } from "../types";
 
 export default class RouletteProcessBetQueue extends Table.Crons.TableProcessBetQueue {
-    decreaseBetTracks(playerName, bet) {
+    decreaseBetTracks(playerName: string, bet: any) {
         this.adjustBetTracks(playerName, bet, true);
     }
 
-    async upsertBet(player, roundId, bet, rate) {
+    async upsertBet(player: any, roundId: number, bet: any, rate: number) {
         const configs = this.gameData.gameConfigs;
-        const newBet = {
+        const newBet: RouletteBet = {
             uid: player.UID,
             name: player.profile.name,
             time: new Date(),
@@ -34,14 +35,16 @@ export default class RouletteProcessBetQueue extends Table.Crons.TableProcessBet
         );
     }
 
-    async insertBetLog(player, roundId, bet, rate) {
-        const newBetLog = {
+    async insertBetLog(player: any, roundId: number, bet: any, rate: number) {
+        const newBetLog: RouletteBetLog = {
             uid: player.UID,
             name: player.profile.name,
             time: new Date(),
             freeBet: bet.freeBet,
             ...bet.betChoices,
             roundId,
+            clientSentTime: bet.clientSentTime,
+            receivedTime: bet.receivedTime,
         };
 
         if (player.session) {
@@ -55,31 +58,32 @@ export default class RouletteProcessBetQueue extends Table.Crons.TableProcessBet
         await this.betLogsRepository.create(newBetLog);
     }
 
-    adjustTotalBets(player, bet, rate) {
+    adjustTotalBets(player: any, bet: any, rate: number) {
         const totalBets = this.gameData.totalBets;
 
         trackBetChoices(totalBets, bet.betChoices, rate);
     }
 
-    formatApiBetInfo(payload) {
+    formatApiBetInfo(payload: any) {
         return {
             amount: payload.amount,
             gameId: this.definition.id,
             gameRoundId: this.gameData.roundId,
             freeBet: payload.freeBet,
+            clientSentTime: payload.time ?? new Date(),
         };
     }
 
-    generatePlacingBetResult(player, balance, bet, rate) {
+    generatePlacingBetResult(player: any, balance: any, bet: any, rate: number) {
         const { betChoices, amount } = bet;
-        const ownBet = super.generatePlacingBetResult(player, balance, bet, rate);
+        const ownBet = super.generatePlacingBetResult(player, balance, bet, rate) as any;
 
         ownBet.ownChip = { betChoices, amount };
 
         return ownBet;
     }
 
-    updateGameDataChips(bet, rate) {
+    updateGameDataChips(bet: any, rate: number) {
         const { betChoices } = bet;
 
         if (!this.gameData.chips[rate]) {
@@ -94,14 +98,14 @@ export default class RouletteProcessBetQueue extends Table.Crons.TableProcessBet
             }
             const trackChoicesPerType = chipRate[typeOfBets];
 
-            Object.entries(choicesPerType).forEach(([betChoice, choiceAmount]) => {
+            Object.entries(choicesPerType as Record<string, number>).forEach(([betChoice, choiceAmount]) => {
                 trackChoicesPerType[betChoice] = trackChoicesPerType[betChoice] ?? {};
                 trackChoicesPerType[betChoice][choiceAmount] = (trackChoicesPerType[betChoice][choiceAmount] || 0) + 1;
             });
         });
     }
 
-    adjustBetTracks = (playerName, bet, reduce = false) => {
+    adjustBetTracks = (playerName: string, bet: any, reduce = false) => {
         if (this.gameData.ingame?.[playerName]) {
             const { betTracks } = this.gameData.ingame[playerName];
 
@@ -109,7 +113,7 @@ export default class RouletteProcessBetQueue extends Table.Crons.TableProcessBet
         }
     };
 
-    adjustOwnBets(playerName, bet) {
+    adjustOwnBets(playerName: string, bet: any) {
         if (this.gameData.ingame?.[playerName]) {
             const playerInGame = this.gameData.ingame[playerName];
 

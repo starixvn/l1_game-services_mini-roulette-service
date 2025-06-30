@@ -2,18 +2,19 @@ export default {
     hostingPort: 5000,
     apiSettings: {
         enabledApi: true,
-        apiUrl: "http://l1_game_api_sit:5000",
-        authUrl: "http://l1_auth_api_sit:5000",
+        apiUrl: "http://l1-game-api-sit-service:5000",
+        authUrl: "http://l1-auth-api-sit-service:5000",
         client: {
             id: "game-server",
             secret: "gameserver@20luminet&",
         },
         useAuthenticate: true,
         requestTimeout: 10000,
+        placeBetTimeout: 2000,
         enabledApiLogs: true,
     },
     authenticateSettings: {
-        url: "http://l1_auth_api_sit:5000",
+        url: "http://l1-auth-api-sit-service:5000",
         id: "game-services",
         secret: "gameservices@20luminet&",
         requestTimeout: 10000,
@@ -21,7 +22,7 @@ export default {
         audiences: ["api", "admin-api"],
     },
     userServiceSettings: {
-        url: "http://l1_user_service_sit:5000",
+        url: "http://l1-user-service-sit-service:5000",
     },
     socketOptions: {
         pingInterval: 60 * 1000,
@@ -50,8 +51,9 @@ export default {
         secretKey: "6c1f0f28-70f2-46ae-b031-22624a6cd8df",
     },
     enableMsgpackParser: true,
-    chips: [1000, 500, 200, 100, 50, 10, 5, 1],
-    maxQuickBets: 5,
+    gameManagementApiSettings: {
+        BASE: "http://l1-game-management-service-sit-service:5000",
+    },
     otel: {
         system: "SG",
         enabled: false,

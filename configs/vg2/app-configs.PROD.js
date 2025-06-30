@@ -9,7 +9,7 @@ export default {
             secret: "gameserver@20luminet&",
         },
         useAuthenticate: true,
-        placeBetTimeout: 4000,
+        placeBetTimeout: 2000,
         requestTimeout: 10000, // 10s
         enabledApiLogs: true,
     },
@@ -52,11 +52,13 @@ export default {
         secretKey: "30d15293-c7de-4c77-9293-b85d6c5bfe1a",
     },
     enableMsgpackParser: true,
-    chips: [20_000_000, 10_000_000, 5_000_000, 1_000_000, 500_000, 200_000, 100_000, 50_000, 20_000, 10_000],
-    maxQuickBets: 100_000,
+    gameManagementApiSettings: {
+        BASE: "http://l2_game_management_service_prod:5000",
+    },
     otel: {
         system: "VG",
         enabled: true,
         endpoint: "http://10.2.189.50:4318/v1/traces",
     },
+    disableSetResult: true,
 };

@@ -1,15 +1,11 @@
 import { helpers } from "sc-common";
 import { PlaceBetConsumer } from "sc-game-base/src/core/event-consumers";
 import notices from "../constants/notices";
-
-const HedgeBetGroupByType = {
-    oddEven: ["even", "odd"],
-    bigSmall: ["small", "big"],
-    redBlack: ["red", "black"],
-};
+import RouletteGameDefinition from "../roulette-game-definition";
 
 export default class RoulettePlaceBetConsumer extends PlaceBetConsumer {
-    composeBettingTimeValidationCriteria() {
+    declare definition: RouletteGameDefinition;
+    composeBettingTimeValidationCriteria(roundId: number) {
         const configs = this.gameData.gameConfigs;
         const shakeThePlateTime = this.definition.durations.placingBets + this.definition.durations.shakeThePlateDuration;
 
@@ -17,6 +13,10 @@ export default class RoulettePlaceBetConsumer extends PlaceBetConsumer {
             {
                 failure: !configs.enabled,
                 notice: this.getNoticeObj(helpers.noticeHelper.invalidBet),
+            },
+            {
+                failure: roundId !== this.gameData.roundId,
+                notice: this.getNoticeObj(helpers.noticeHelper.invalidBet, { gameRoundId: roundId }),
             },
             {
                 failure:
@@ -32,13 +32,13 @@ export default class RoulettePlaceBetConsumer extends PlaceBetConsumer {
         ];
     }
 
-    composeBetAmountValidationCriteria(player, betChoices, totalAmount, freeBet) {
+    composeBetAmountValidationCriteria(player: any, betChoices: any, totalAmount: number, freeBet: boolean) {
         const settings = this.gameData.currencyGroupGames.find((x) => x.groupId.toString() === player.session.currencyGroupId);
         const configs = this.gameData.gameConfigs;
         const { betTracks } = this.gameData.ingame[player.profile.name] || { betTracks: {} };
         const totalAmountOfExistingBets = this.calculateTotalAmount(betTracks);
-        const minBet = Math.max(player.profile.minBet, settings.minBet);
-        const maxBet = Math.min(player.profile.maxBet, settings.maxBet);
+        const minBet = Math.max(player.profile.minBet, settings?.minBet ?? 0);
+        const maxBet = Math.min(player.profile.maxBet, settings?.maxBet ?? 0);
 
         return [
             {
@@ -68,8 +68,8 @@ export default class RoulettePlaceBetConsumer extends PlaceBetConsumer {
         ];
     }
 
-    composeBetChoiceValidationCriteria(betChoices) {
-        const validChoices = this.definition.choices.choicesGroupByType;
+    composeBetChoiceValidationCriteria(betChoices: any) {
+        const validChoices = (this.definition.choices as any).choicesGroupByType;
 
         return [
             {
@@ -79,41 +79,22 @@ export default class RoulettePlaceBetConsumer extends PlaceBetConsumer {
         ];
     }
 
-    composeHedgeBetValidationCriteria(betChoices, player) {
-        const { betTracks } = this.gameData.ingame[player.profile.name] || { betTracks: {} };
-        let hedgeBetType = "";
-
-        Object.entries(betChoices).forEach(([typeOfBets, choicesPerType]) => {
-            const trackChoicesPerType = betTracks[typeOfBets] || {};
-            const isOnHedgeBetGroup = this.definition.hedgeBetGroups.some((group) => group === typeOfBets);
-
-            if (isOnHedgeBetGroup) {
-                const setOfUniqueBetChoice = new Set([...Object.keys(trackChoicesPerType ?? {}), ...Object.keys(choicesPerType ?? {})]);
-
-                setOfUniqueBetChoice.size > 1 && (hedgeBetType = typeOfBets);
-            }
-        });
-
-        return [
-            {
-                failure: !!hedgeBetType,
-                notice: this.getNoticeObj(helpers.noticeHelper.disallowHedgeBet, {
-                    hedgeBetGroup: HedgeBetGroupByType[hedgeBetType],
-                }),
-            },
-        ];
+    composeHedgeBetValidationCriteria(betChoices: any, player: any) {
+        return [];
     }
 
-    consume(player, payload) {
+    consume(player: any, payload: any) {
         Object.assign(payload, {
             amount: this.calculateTotalAmount(payload.betChoices) >> 0,
             freeBet: payload.freeBet ?? false,
+            roundId: payload.roundId ?? this.gameData.roundId,
+            receivedTime: new Date(),
         });
 
-        const { amount, betChoices, freeBet } = payload;
+        const { amount, betChoices, freeBet, roundId } = payload;
         const name = player.profile.name;
 
-        if (!this.validateBetRequest(player, betChoices, amount, freeBet)) {
+        if (!this.validateBetRequest(player, betChoices, amount, freeBet, roundId)) {
             return;
         }
 
@@ -124,7 +105,6 @@ export default class RoulettePlaceBetConsumer extends PlaceBetConsumer {
                 system: player.session.system,
                 betTracks: {},
                 betQueue: [],
-
                 operatorId: player.session.operatorId,
             };
 
@@ -135,8 +115,8 @@ export default class RoulettePlaceBetConsumer extends PlaceBetConsumer {
         this.gameData.ingame[name].betQueue.push({ player, payload });
     }
 
-    adjustBetTracks(playerName, bet) {
-        const { betChoices } = bet;
+    adjustBetTracks(playerName: string, bet: any) {
+        const { betChoices }: { betChoices: Record<string, Record<string, number>> } = bet;
 
         if (this.gameData.ingame?.[playerName]) {
             const playerInGame = this.gameData.ingame[playerName];
@@ -155,7 +135,7 @@ export default class RoulettePlaceBetConsumer extends PlaceBetConsumer {
         }
     }
 
-    calculateTotalAmount(betChoices) {
+    calculateTotalAmount(betChoices: Record<string, Record<string, number>>) {
         return Object.entries(betChoices).reduce((previousTotalAmount, [typeOfBets, choicesPerType]) => {
             if (choicesPerType) {
                 const totalAmountPerType = Object.entries(choicesPerType).reduce((previousTotalAmountPerType, [betChoice, amount]) => {
@@ -171,7 +151,7 @@ export default class RoulettePlaceBetConsumer extends PlaceBetConsumer {
         }, 0);
     }
 
-    anyInvalidChoice(betChoices, validBetChoices) {
+    anyInvalidChoice(betChoices: Record<string, Record<string, number>>, validBetChoices: Record<string, string[]>) {
         return Object.entries(betChoices).some(([typeOfBets, choicesPerType]) => {
             const validBetChoicesPerType = validBetChoices[typeOfBets];
 
@@ -183,7 +163,12 @@ export default class RoulettePlaceBetConsumer extends PlaceBetConsumer {
         });
     }
 
-    anyChoiceExceedItsMaxBet(betChoices, betTracks, configs, userMaxBet) {
+    anyChoiceExceedItsMaxBet(
+        betChoices: Record<string, Record<string, number>>,
+        betTracks: Record<string, Record<string, number>>,
+        configs: any,
+        userMaxBet: number
+    ) {
         return Object.entries(betChoices).some(([typeOfBets, choicesPerType]) => {
             const maxBetPerChoice = Math.min(userMaxBet, configs.maxBetPerChoices[typeOfBets] ?? 0);
 
@@ -195,7 +180,11 @@ export default class RoulettePlaceBetConsumer extends PlaceBetConsumer {
         });
     }
 
-    anyChoiceBelowMinBet(betChoices, betTracks, minBet) {
+    anyChoiceBelowMinBet(
+        betChoices: Record<string, Record<string, number>>,
+        betTracks: Record<string, Record<string, number>>,
+        minBet: number
+    ) {
         return Object.entries(betChoices).some(([typeOfBets, choicesPerType]) => {
             return Object.entries(choicesPerType).some(([betChoice, amount]) => {
                 const currentBetAmount = betTracks[typeOfBets]?.[betChoice] ?? 0;

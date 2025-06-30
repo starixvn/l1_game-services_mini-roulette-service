@@ -1,12 +1,9 @@
-import awilix from "awilix";
+import { asClass, asValue } from "awilix";
 import { Table } from "sc-game-base";
-
-import { PlaceBetConsumer, SettleGameRoundConsumer } from "./consumers";
+import { PlaceBetConsumer, SettleGameRoundConsumer, UnsettledRoundConsumer } from "./consumers";
 import { RouletteBot, RouletteGameCron, RouletteProcessBetQueue } from "./crons";
 import { RouletteBets, RouletteRounds, RouletteTmpBets, RouletteBetLogs } from "./models";
 import RouletteHistoryQuery from "./query-apis/roulette-history-query";
-
-const { asClass, asValue } = awilix;
 
 export default class RouletteContainerRegistry extends Table.TableContainerRegistry {
     registerModels() {
@@ -26,6 +23,7 @@ export default class RouletteContainerRegistry extends Table.TableContainerRegis
         this.container.register({
             placeBetConsumer: asClass(PlaceBetConsumer).singleton(),
             settleGameRoundConsumer: asClass(SettleGameRoundConsumer).singleton().proxy(),
+            unsettledRoundConsumer: asClass(UnsettledRoundConsumer).singleton().proxy(),
         });
     }
 

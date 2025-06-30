@@ -1,7 +1,7 @@
 import { Core } from "sc-game-base";
 
 export default class RouletteHistoryQuery extends Core.QueryApis.HistoryQuery {
-    getBetLogDetails(player, roundId) {
+    getBetLogDetails(player: any, roundId: number) {
         return this.betLogsRepository
             .find(
                 { roundId, uid: player.UID },

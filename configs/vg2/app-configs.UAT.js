@@ -2,19 +2,19 @@ export default {
     hostingPort: 5000,
     apiSettings: {
         enabledApi: true,
-        apiUrl: "http://l2_game_api_uat:5000",
-        authUrl: "http://l2_auth_api_uat:5000",
+        apiUrl: "http://l2-game-api-uat-service:5000",
+        authUrl: "http://l2-auth-api-uat-service:5000",
         client: {
             id: "game-server",
             secret: "gameserver@20luminet&",
         },
         useAuthenticate: true,
-        placeBetTimeout: 4000,
+        placeBetTimeout: 2000,
         requestTimeout: 10000, // 10s
         enabledApiLogs: true,
     },
     authenticateSettings: {
-        url: "http://l2_auth_api_uat:5000",
+        url: "http://l2-auth-api-uat-service:5000",
         id: "game-services",
         secret: "gameservices@20luminet&",
         requestTimeout: 10000,
@@ -22,7 +22,7 @@ export default {
         audiences: ["api", "admin-api"],
     },
     userServiceSettings: {
-        url: "http://l2_user_service_uat:5000",
+        url: "http://l2-user-service-uat-service:5000",
     },
     socketOptions: {
         pingInterval: 60 * 1000,
@@ -52,8 +52,9 @@ export default {
         secretKey: "6c1f0f28-70f2-46ae-b031-22624a6cd8df",
     },
     enableMsgpackParser: true,
-    chips: [20_000_000, 10_000_000, 5_000_000, 1_000_000, 500_000, 200_000, 100_000, 50_000, 20_000, 10_000],
-    maxQuickBets: 100_000,
+    gameManagementApiSettings: {
+        BASE: "http://l2-game-management-service-uat-service:5000",
+    },
     otel: {
         system: "VG",
         enabled: false,

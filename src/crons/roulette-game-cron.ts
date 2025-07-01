@@ -1,27 +1,24 @@
 import { Table } from "sc-game-base";
 import { RouletteGameData } from "../roulette-game-data";
+import RouletteBetQuery from "../query-apis/roulette-bet-query";
 
 export default class RouletteGameCron extends Table.Crons.TableGameCron {
     declare gameData: RouletteGameData;
+    declare betQuery: RouletteBetQuery;
 
-    async start() {
-        await this.roundIdConsumer.initRoundId();
-        await this.getSettingForNewRound();
-        await this.updateExchangeRates();
-        await this.getPlayerBetHistory();
-        await this.unsettledRoundConsumer.proceed();
-        this.startCron();
+    constructor(props: any) {
+        super(props);
+        this.betQuery = props.betQuery;
     }
 
     async getSettingForNewRound(): Promise<void> {
         await super.getSettingForNewRound();
-        // todo: guarantee feature
+        // todo: get guaranteed feature & get player bet history if totalDays changed
     }
 
     async getPlayerBetHistory() {
-        // const { accumulatedDays } = this.gameData.guaranteedWinFeature;
-        // const betHistory = await this.betQuery?.getBetHistoryByPlayer(accumulatedDays);
-        // this.gameData.playerBetHistory = betHistory;
+        const betHistory = await this.betQuery?.getBetHistoryByPlayer(this.gameData.accumulatedDays ?? 0);
+        this.gameData.playerBetHistory = betHistory;
     }
 
     isStartingTime(remainingTime: number, durations: any) {

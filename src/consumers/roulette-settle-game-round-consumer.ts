@@ -2,6 +2,10 @@ import { Table } from "sc-game-base";
 import { SettlementResult } from "../types";
 
 export default class RouletteSettleGameRoundConsumer extends Table.EventConsumers.TableSettleGameRoundConsumer {
+    constructor(props: any) {
+        super(props);
+    }
+
     calculateBetResult(settlementResult: any, bet: any, odds: Record<string, number>) {
         const betResult = Object.entries(settlementResult as SettlementResult).reduce(
             (result, [typeOfBets, winningChoices]) => {

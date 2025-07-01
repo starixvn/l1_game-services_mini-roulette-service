@@ -1,9 +1,9 @@
 import { asClass, asValue } from "awilix";
 import { Table } from "sc-game-base";
-import { PlaceBetConsumer, SettleGameRoundConsumer, UnsettledRoundConsumer } from "./consumers";
+import { InGameConsumer, PlaceBetConsumer, RoundResultConsumer, SettleGameRoundConsumer, UnsettledRoundConsumer } from "./consumers";
 import { RouletteBot, RouletteGameCron, RouletteProcessBetQueue } from "./crons";
-import { RouletteBets, RouletteRounds, RouletteTmpBets, RouletteBetLogs } from "./models";
-import RouletteHistoryQuery from "./query-apis/roulette-history-query";
+import { RouletteBets, RouletteRounds, RouletteTmpBets, RouletteBetLogs, RoulettePlayerRoundModel } from "./models";
+import { RouletteHistoryQuery, RouletteBetQuery, RouletteRoundQuery } from "./query-apis";
 
 export default class RouletteContainerRegistry extends Table.TableContainerRegistry {
     registerModels() {
@@ -14,6 +14,7 @@ export default class RouletteContainerRegistry extends Table.TableContainerRegis
             betsRepository: asValue(RouletteBets),
             tempBetsRepository: asValue(RouletteTmpBets),
             betLogsRepository: asValue(RouletteBetLogs),
+            playerRoundRepository: asValue(RoulettePlayerRoundModel),
         });
     }
 
@@ -21,7 +22,9 @@ export default class RouletteContainerRegistry extends Table.TableContainerRegis
         super.registerConsumers();
 
         this.container.register({
+            inGameConsumer: asClass(InGameConsumer).singleton(),
             placeBetConsumer: asClass(PlaceBetConsumer).singleton(),
+            roundResultConsumer: asClass(RoundResultConsumer).singleton().proxy(),
             settleGameRoundConsumer: asClass(SettleGameRoundConsumer).singleton().proxy(),
             unsettledRoundConsumer: asClass(UnsettledRoundConsumer).singleton().proxy(),
         });
@@ -42,6 +45,8 @@ export default class RouletteContainerRegistry extends Table.TableContainerRegis
 
         this.container.register({
             historyQuery: asClass(RouletteHistoryQuery).singleton(),
+            betQuery: asClass(RouletteBetQuery).singleton(),
+            roundQuery: asClass(RouletteRoundQuery).singleton(),
         });
     }
 }

@@ -15,9 +15,10 @@ export type RouletteBet = {
     rate?: number;
     playerId?: string;
     operatorId?: string;
-    roundId?: number;
+    roundId: number;
     paid?: boolean;
     clientSeed?: Date;
+    isControl?: boolean;
 };
 
 export type RouletteBetLog = {
@@ -49,3 +50,10 @@ export type RouletteRound = {
     time: Date;
     exchangeRateId: number;
 };
+
+export type RoulettePlayerRound = {
+    uid: string;
+    name: string;
+    playerId: string;
+    operatorId: string;
+} & RouletteRound;

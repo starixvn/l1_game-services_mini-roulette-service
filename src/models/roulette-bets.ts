@@ -6,6 +6,7 @@ const schema = new mongoose.Schema({
     dozen: { type: Object },
     redBlack: { type: Object },
     oddEven: { type: Object },
+    isControl: { type: Boolean, default: false },
     ...BetSchema.betBaseSchema,
 });
 

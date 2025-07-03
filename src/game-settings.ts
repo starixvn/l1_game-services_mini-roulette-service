@@ -12,7 +12,6 @@ export default {
         choicesGroupByType: ChoiceHelper.getBetChoicesGroupByTypes(),
     },
     choicesMapper: {},
-    defaultBetTracks: {},
     numberOfRoundHistory: 10,
     hedgeBetGroups: ["oddEven", "bigSmall", "redBlack"],
 };

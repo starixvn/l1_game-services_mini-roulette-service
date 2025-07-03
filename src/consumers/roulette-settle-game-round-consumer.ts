@@ -72,6 +72,11 @@ export default class RouletteSettleGameRoundConsumer extends SettleGameRoundCons
 
         this.captureBetResult(bet.uid, betResult, bet.time);
         this.userBetResultPublisher.publish(bet.uid, betResult);
+        this.resetPlayerData(bet.name);
+    }
+
+    resetPlayerData(playerName: string) {
+        delete this.gameData.ingame[playerName];
     }
 
     captureBetResult(uid: string, betResult: { totalBetAmount: number; totalWin: number }, time: Date) {

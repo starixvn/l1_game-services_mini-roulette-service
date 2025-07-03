@@ -33,6 +33,7 @@
         "sc-game-base": "5.4.0"
     },
     "resolutions": {
+        "mongoose": "5.13.20",
         "sc-base-apis": "1.18.2"
     },
     "devDependencies": {

@@ -3,7 +3,7 @@ export default {
     apiSettings: {
         enabledApi: true,
         apiUrl: "https://l2-proxy1.lumigame.com/game-api",
-        authUrl: "http://l2-auth1.lumigame.com",
+        authUrl: "https://l2-auth1.lumigame.com",
         client: {
             id: "game-server",
             secret: "gameserver@20luminet&",
@@ -14,7 +14,7 @@ export default {
         enabledApiLogs: true,
     },
     authenticateSettings: {
-        url: "http://l2-auth1.lumigame.com",
+        url: "https://l2-auth1.lumigame.com",
         id: "game-services",
         secret: "gameservices@20luminet&",
         requestTimeout: 10000,

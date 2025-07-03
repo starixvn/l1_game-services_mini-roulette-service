@@ -1,48 +1,18 @@
-import { BaseEventPublishers, Crons } from "sc-game-base/src/core";
-import RouletteSettleGameRoundConsumer from "../consumers/roulette-settle-game-round-consumer";
-import RouletteGameDefinition from "../roulette-game-definition";
-import { RouletteGameData } from "../roulette-game-data";
-import mongoose from "mongoose";
-import { logger } from "sc-common";
-import GameManagementApiClientFactory from "sc-game-base/src/core/game-management-api";
-import BaseMetrics from "sc-game-base/src/core/base-metrics";
-import { buildBetAmountIncrement } from "../helpers/choice-helper";
+import { Crons } from "sc-game-base/src/core";
+import { trackBetChoices, buildBetAmountIncrement } from "../helpers/choice-helper";
 import { RouletteBet, RouletteBetLog } from "../types";
 
 export default class RouletteProcessBetQueue extends Crons.ProcessBetQueue {
-    settleGameRoundConsumer: RouletteSettleGameRoundConsumer;
-    constructor(props: {
-        definition: RouletteGameDefinition;
-        gameData: RouletteGameData;
-        placeBetPublisher: BaseEventPublishers.PlaceBetPublisher;
-        placeBet: any;
-        logService: typeof logger;
-        betsRepository: mongoose.Model<any>;
-        betLogsRepository: mongoose.Model<any>;
-        gameManagementApiClientFactory: GameManagementApiClientFactory;
-        baseMetrics: BaseMetrics;
-        settleGameRoundConsumer: RouletteSettleGameRoundConsumer;
-    }) {
-        super(props);
-        this.settleGameRoundConsumer = props.settleGameRoundConsumer;
-    }
     async proceedBet(player: any, payload: any) {
-        payload.roundId = this.gameData.roundId;
-        this.gameData.roundId++;
+        if (this.gameData.ingame?.[player.profile.name]?.roundId === 0) {
+            this.gameData.ingame[player.profile.name].roundId = this.gameData.roundId;
+            this.gameData.roundId++;
+        }
+        payload.roundId = this.gameData.ingame?.[player.profile.name]?.roundId ?? this.gameData.roundId;
         await super.proceedBet(player, payload);
-        this.resetPlayerBetTracks(player.profile.name);
     }
 
-    async handleSuccessBet(player: any, balance: any, roundId: number, bet: any) {
-        await super.handleSuccessBet(player, balance, roundId, bet);
-        await this.settleGameRoundConsumer.settleRoundById(roundId);
-    }
-
-    resetPlayerBetTracks(playerName: string) {
-        delete this.gameData.ingame[playerName];
-    }
-
-    async validateBetRequest(player: any, payload: any) {
+    async validateBetRequest(_: any, __: any) {
         return true;
     }
 
@@ -55,7 +25,6 @@ export default class RouletteProcessBetQueue extends Crons.ProcessBetQueue {
             odds: configs.odds,
             freeBet: bet.freeBet,
             roundId,
-            clientSeed: bet.clientSeed,
         };
         const existingBetFilter = { uid: player.UID, roundId, freeBet: bet.freeBet };
         const existingBetIncrement = { ...buildBetAmountIncrement(bet.betChoices), totalAmount: bet.amount };
@@ -104,18 +73,41 @@ export default class RouletteProcessBetQueue extends Crons.ProcessBetQueue {
             gameId: this.definition.id,
             gameRoundId: payload.roundId,
             freeBet: payload.freeBet,
+            clientSentTime: payload.clientSentTime ?? payload.time ?? new Date(),
         };
+    }
+
+    generatePlacingBetResult(player: any, balance: any, payload: any, rate: number): any {
+        const { amount, betChoices, roundId } = payload;
+        const ownBet = super.generatePlacingBetResult(player, balance, payload, rate) as any;
+        ownBet.ownChip = { betChoices, amount };
+        ownBet.roundId = roundId;
+        return ownBet;
     }
 
     adjustTotalBets(player: any, bet: any, rate: number) {
         // nothing
     }
 
-    adjustOwnBets(playerName: string, bet: any) {
-        // nothing
+    decreaseBetTracks(playerName: string, bet: any) {
+        this.adjustBetTracks(playerName, bet, true);
     }
 
-    decreaseBetTracks(playerName: string, bet: any) {
-        // nothing
+    adjustBetTracks = (playerName: string, bet: any, reduce = false) => {
+        if (this.gameData.ingame?.[playerName]) {
+            const { betTracks } = this.gameData.ingame[playerName];
+
+            trackBetChoices(betTracks, bet.betChoices, 1, reduce);
+        }
+    };
+
+    adjustOwnBets(playerName: string, bet: any) {
+        if (this.gameData.ingame?.[playerName]) {
+            const playerInGame = this.gameData.ingame[playerName];
+
+            playerInGame.ownBets = playerInGame.ownBets ?? {};
+
+            trackBetChoices(playerInGame.ownBets, bet.betChoices, 1);
+        }
     }
 }

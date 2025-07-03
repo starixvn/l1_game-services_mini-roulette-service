@@ -38,7 +38,6 @@ export default class RouletteGameCron extends Core.Crons.BaseGameCron {
         const { durations } = this.definition;
         if (this.gameData.remainingTime === durations.wholeRound) {
             await this.checkGameStatus();
-            this.bot && (await this.bot.reset());
         }
 
         if (!this.gameData.disabled) {

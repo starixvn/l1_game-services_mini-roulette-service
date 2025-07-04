@@ -92,3 +92,22 @@ export const trackBetChoices = (
         }
     });
 };
+
+export const mapBetChoiceToId = (betType: string, choice: string): number => {
+    const { betChoices } = Constants;
+    
+    switch (betType) {
+        case Constants.betTypes.straightUp:
+            return (betChoices.straightUp as Record<string, number>)[choice];
+        case Constants.betTypes.redBlack:
+            return (betChoices.redBlack as Record<string, number>)[choice];
+        case Constants.betTypes.oddEven:
+            return (betChoices.oddEven as Record<string, number>)[choice];
+        case Constants.betTypes.dozen:
+            return (betChoices.dozen as Record<string, number>)[choice];
+        default:
+            return 0;
+    }
+};
+
+

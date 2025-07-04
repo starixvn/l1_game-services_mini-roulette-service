@@ -5,6 +5,7 @@ import { GuaranteedStatus, RouletteBet, SettlementResult } from "../types";
 import { RouletteGameData } from "../roulette-game-data";
 import RouletteGuaranteedFeatureConsumer from "./roulette-guaranteed-feature-consumer";
 import Constants from "../constants";
+import { mapBetChoiceToId } from "../helpers/choice-helper";
 
 export default class RouletteSettleGameRoundConsumer extends SettleGameRoundConsumer {
     declare gameData: RouletteGameData;
@@ -83,6 +84,38 @@ export default class RouletteSettleGameRoundConsumer extends SettleGameRoundCons
         }
     }
 
+        // Create metadata from bet log choices
+        const metaData = this.createBetChoiceMetadata(bet,settlementResult, odds);
+
+    }
+
+    private createBetChoiceMetadata(bet: RouletteBet, settlementResult: SettlementResult, odds: Record<string, number>) {
+        const betDetails: Array<{ ChoiceId: number; ValidBetAmount: number; TotalAmount: number; TotalWin: number }> = [];
+        const betTypes = Object.values(constants.betTypes);
+
+        betTypes.forEach(betType => {
+            const betChoices = bet[betType as keyof RouletteBet] as Record<string, number> | undefined;
+            if (!betChoices) return;
+
+            const oddsOfType = odds?.[betType] ?? 0;
+
+            Object.entries(betChoices).forEach(([choice, amount]) => {
+                const isWin = settlementResult[betType as keyof SettlementResult].includes(choice);
+                const winAmount = isWin ? amount  * oddsOfType : 0;
+                const choiceId = mapBetChoiceToId(betType, choice);
+                
+                betDetails.push({
+                    ChoiceId: choiceId,
+                    ValidBetAmount: amount,
+                    TotalAmount: amount,
+                    TotalWin: winAmount
+                });
+            });
+        });
+
+        return {
+            BetDetails: betDetails
+        };
     resetPlayerData(playerName: string) {
         delete this.gameData.ingame[playerName];
     }

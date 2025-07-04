@@ -1,5 +1,5 @@
 import { Crons } from "sc-game-base/src/core";
-import { trackBetChoices, buildBetAmountIncrement } from "../helpers/choice-helper";
+import { trackBetChoices, buildBetAmountIncrement, mapBetChoiceToId } from "../helpers/choice-helper";
 import { RouletteBet, RouletteBetLog } from "../types";
 import { RouletteGameData } from "../roulette-game-data";
 
@@ -78,8 +78,16 @@ export default class RouletteProcessBetQueue extends Crons.ProcessBetQueue {
             gameId: this.definition.id,
             gameRoundId: payload.roundId,
             freeBet: payload.freeBet,
+            choiceId: this.getFirstBetChoiceId(payload.betChoices),
             clientSentTime: payload.clientSentTime ?? payload.time ?? new Date(),
         };
+    }
+
+    private getFirstBetChoiceId(betChoices: Record<string, Record<string, number>>): number {
+        const firstBetType = Object.keys(betChoices)[0];
+        const firstChoice = Object.keys(betChoices[firstBetType])[0];
+
+        return mapBetChoiceToId(firstBetType, firstChoice);
     }
 
     generatePlacingBetResult(player: any, balance: any, payload: any, rate: number): any {

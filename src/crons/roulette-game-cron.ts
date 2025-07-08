@@ -2,11 +2,15 @@ import { Core } from "sc-game-base";
 import { RouletteBetQuery } from "../query-apis";
 import RouletteSettleGameRoundConsumer from "../consumers/roulette-settle-game-round-consumer";
 import { RouletteGameData } from "../roulette-game-data";
+import { getOrDefault } from "sc-game-base/src/core/game-management-api";
+import { CurrencyGroupGameConfigs } from "sc-game-management-client";
+import { GuaranteedFeature } from "../types";
 
 export default class RouletteGameCron extends Core.Crons.BaseGameCron {
     declare gameData: RouletteGameData;
-    betQuery: RouletteBetQuery;
     declare settleGameRoundConsumer: RouletteSettleGameRoundConsumer;
+    betQuery: RouletteBetQuery;
+
     constructor(props: any) {
         super(props);
         this.betQuery = props.betQuery;
@@ -14,24 +18,38 @@ export default class RouletteGameCron extends Core.Crons.BaseGameCron {
 
     async start() {
         await this.roundIdConsumer.initRoundId();
-        await this.queryLastResult();
         await this.getSettingForNewRound();
         await this.updateExchangeRates();
-        await this.getPlayerBetHistory();
         await this.settleGameRoundConsumer.settleUnsettledBets();
         this.startCron();
     }
 
     async getSettingForNewRound() {
         await super.getSettingForNewRound();
-        // TODO: get guaranteed win feature
+        await this.getGuaranteedFeatureConfigs();
+        await this.getPlayerBetHistory();
+    }
+
+    async getGuaranteedFeatureConfigs() {
+        const guaranteedFeature = (await getOrDefault(
+            this.gameManagementApiClient.currencyGroupGames.getGuaranteedFeatureConfigsByGameId(this.definition.id),
+            []
+        )) as CurrencyGroupGameConfigs[];
+        this.gameData.guaranteedFeature = guaranteedFeature.reduce((acc, curr: CurrencyGroupGameConfigs) => {
+            acc[curr.groupId] = curr.value as GuaranteedFeature;
+            return acc;
+        }, {} as Record<string, GuaranteedFeature>);
     }
 
     async getPlayerBetHistory() {
-        // TODO: get player bet history
-        const { accumulatedDays } = this.gameData.guaranteedWinFeature;
-        const betHistory = await this.betQuery?.getBetHistoryByPlayer(accumulatedDays);
-        this.gameData.playerBetHistory = betHistory;
+        const accumulatedDays = Math.max(
+            0,
+            ...Object.values(this.gameData.guaranteedFeature).map((guaranteedFeature) => guaranteedFeature.totalDays)
+        );
+        if (this.gameData.accumulatedDays !== accumulatedDays) {
+            this.gameData.accumulatedDays = accumulatedDays;
+            this.gameData.playerBetHistory = accumulatedDays > 0 ? await this.betQuery?.getBetHistoryGroupByPlayer(accumulatedDays) : {};
+        }
     }
 
     async proceed() {
@@ -45,9 +63,6 @@ export default class RouletteGameCron extends Core.Crons.BaseGameCron {
         }
 
         const remainingTime = this.gameData.remainingTime;
-        // if (remainingTime % durations.botFrequency === 0) {
-        //     this.bot && (await this.bot.run());
-        // }
 
         if (remainingTime < 0) {
             this.gameData.remainingTime = durations.wholeRound;

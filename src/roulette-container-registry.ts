@@ -1,7 +1,14 @@
 import { asClass, asValue } from "awilix";
 import { Table, Core } from "sc-game-base";
 
-import { PlaceBetConsumer, SettleGameRoundConsumer, RoundResultConsumer, InGameConsumer, SpinConsumer } from "./consumers";
+import {
+    PlaceBetConsumer,
+    SettleGameRoundConsumer,
+    RoundResultConsumer,
+    InGameConsumer,
+    SpinConsumer,
+    GuaranteedFeatureConsumer,
+} from "./consumers";
 import { RouletteGameCron, RouletteProcessBetQueue } from "./crons";
 import { RouletteBets, RouletteRounds, RouletteBetLogs } from "./models";
 import { HttpRouter, SocketRouter } from "./routers";
@@ -18,6 +25,7 @@ export default class RouletteContainerRegistry extends Table.TableContainerRegis
             roundResultConsumer: asClass(RoundResultConsumer).singleton().proxy(),
             settleGameRoundConsumer: asClass(SettleGameRoundConsumer).singleton().proxy(),
             spinConsumer: asClass(SpinConsumer).singleton().proxy(),
+            guaranteedFeatureConsumer: asClass(GuaranteedFeatureConsumer).singleton().proxy(),
         });
     }
 

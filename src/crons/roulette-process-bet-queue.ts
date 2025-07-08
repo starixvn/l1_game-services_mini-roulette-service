@@ -1,8 +1,10 @@
 import { Crons } from "sc-game-base/src/core";
 import { trackBetChoices, buildBetAmountIncrement } from "../helpers/choice-helper";
 import { RouletteBet, RouletteBetLog } from "../types";
+import { RouletteGameData } from "../roulette-game-data";
 
 export default class RouletteProcessBetQueue extends Crons.ProcessBetQueue {
+    declare gameData: RouletteGameData;
     async proceedBet(player: any, payload: any) {
         if (this.gameData.ingame?.[player.profile.name]?.roundId === 0) {
             this.gameData.ingame[player.profile.name].roundId = this.gameData.roundId;
@@ -12,7 +14,7 @@ export default class RouletteProcessBetQueue extends Crons.ProcessBetQueue {
         await super.proceedBet(player, payload);
     }
 
-    async validateBetRequest(_: any, __: any) {
+    async validateBetRequest(_: unknown, __: unknown) {
         return true;
     }
 
@@ -35,6 +37,8 @@ export default class RouletteProcessBetQueue extends Crons.ProcessBetQueue {
             newBet.rate = rate;
             newBet.operatorId = player.session.operatorId;
             newBet.playerId = player.session.playerId;
+            newBet.currencyGroupId = player.session.currencyGroupId;
+            newBet.guaranteedFeature = this.gameData.guaranteedFeature[player.session.currencyGroupId];
         }
 
         await this.betsRepository.updateOne(
@@ -62,6 +66,7 @@ export default class RouletteProcessBetQueue extends Crons.ProcessBetQueue {
             newBetLog.rate = rate;
             newBetLog.operatorId = player.session.operatorId;
             newBetLog.playerId = player.session.playerId;
+            newBetLog.currencyGroupId = player.session.currencyGroupId;
         }
 
         await this.betLogsRepository.create(newBetLog);

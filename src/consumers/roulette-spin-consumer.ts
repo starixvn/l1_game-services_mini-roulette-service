@@ -23,7 +23,7 @@ export default class RouletteSpinConsumer {
     }
 
     validateRequest(player: any) {
-        const playerName = player.profile.name;
+        const playerName = player?.profile?.name;
         const playerData = this.gameData.ingame?.[playerName];
         if (!playerData) {
             return this.verifyCriteria(
@@ -36,15 +36,17 @@ export default class RouletteSpinConsumer {
                 player
             );
         }
-        const { betQueue, betTracks, betProcessing } = this.gameData.ingame?.[playerName] || {
+        const { betQueue, betTracks, betProcessing, roundId } = this.gameData.ingame?.[playerName] || {
             betTracks: {},
             betProcessing: true,
             betQueue: [],
+            roundId: 0,
         };
         const criteria = [
             { failure: betProcessing, errorCode: notices.processingAction },
             { failure: betQueue.length > 0, errorCode: notices.processingAction },
             { failure: Object.keys(betTracks).length === 0, errorCode: helpers.noticeHelper.invalidBet },
+            { failure: !roundId || roundId <= 0, errorCode: helpers.noticeHelper.invalidBet },
         ];
         return this.verifyCriteria(criteria, player);
     }
@@ -64,8 +66,8 @@ export default class RouletteSpinConsumer {
         if (!this.validateRequest(player)) {
             return;
         }
-        const playerName = player.profile.name;
+        const playerName = player?.profile?.name;
         const playerData = this.gameData.ingame?.[playerName];
-        playerData.roundId > 0 && this.settleGameRoundConsumer.settleRoundById(playerData.roundId);
+        this.settleGameRoundConsumer.settleRoundById(playerData.roundId);
     }
 }

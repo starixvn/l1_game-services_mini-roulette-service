@@ -11,4 +11,9 @@ export default {
         redBlack: "redBlack",
         oddEven: "oddEven",
     },
+    guaranteedStatus: {
+        normal: "normal",
+        weakened: "weakened",
+        exited: "",
+    },
 };

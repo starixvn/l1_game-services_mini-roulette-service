@@ -15,9 +15,13 @@ export type RouletteBet = {
     rate?: number;
     playerId?: string;
     operatorId?: string;
-    roundId?: number;
+    roundId: number;
     paid?: boolean;
     clientSeed?: Date;
+    currencyGroupId?: string;
+    guaranteedFeature?: GuaranteedFeature;
+    guaranteedWinStatus?: string;
+    guaranteedLossStatus?: string;
 };
 
 export type RouletteBetLog = {
@@ -33,6 +37,7 @@ export type RouletteBetLog = {
     playerId?: string;
     operatorId?: string;
     roundId?: number;
+    currencyGroupId?: string;
 };
 
 export type SettlementResult = {
@@ -49,4 +54,27 @@ export type RouletteRound = {
     settlementResult: SettlementResult;
     time: Date;
     exchangeRateId: number;
+};
+
+export type ThresholdSetting = {
+    threshold: number;
+    normalWinningPercentage: number;
+    enabledWeakened: boolean;
+    weakenedWinningPercentage: number;
+};
+export type GuaranteedConfig = {
+    enabled: boolean;
+    floating: number;
+    thresholdSettings: ThresholdSetting[];
+};
+export type GuaranteedFeature = {
+    gamingDays: number;
+    totalDays: number;
+    guaranteedWin?: GuaranteedConfig;
+    guaranteedLoss?: GuaranteedConfig;
+};
+export type GuaranteedStatus = {
+    guaranteedWinStatus: string;
+    guaranteedLossStatus: string;
+    winningPercentage: number;
 };

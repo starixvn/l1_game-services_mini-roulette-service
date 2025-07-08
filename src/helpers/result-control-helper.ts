@@ -1,6 +1,7 @@
 import Chance from "chance";
 import Constants from "../constants";
 import { RouletteBet } from "../types";
+import { generateResult } from "./result-helper";
 
 type ExtractBetTypes = {
     betType: string;
@@ -131,7 +132,7 @@ const createWinningNumberPool = (allResults: NumberResult[]) => {
     return chance.shuffle(selectionPool);
 };
 
-export const controlResultByBet = (bet: RouletteBet, winningPercentage: number) => {
+export const controlResultByBet = (bet: RouletteBet, winningPercentage: number, randomMode: number) => {
     const chance = new Chance();
     const allResults = calculateAllNumberResults(bet);
     const adjustedWinningPercentage = adjustWinningPercentageForBetTypes(winningPercentage, allResults);
@@ -139,9 +140,8 @@ export const controlResultByBet = (bet: RouletteBet, winningPercentage: number) 
     const expectedNumbers = shouldWin
         ? createWinningNumberPool(allResults)
         : allResults.filter((result) => result.profit <= 0).map((result) => result.number);
-
     if (expectedNumbers.length === 0) {
-        return chance.integer({ min: Constants.numberWheel.min, max: Constants.numberWheel.max });
+        return generateResult(randomMode);
     }
 
     return chance.pickone(expectedNumbers);

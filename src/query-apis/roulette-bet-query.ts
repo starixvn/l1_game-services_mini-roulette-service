@@ -1,4 +1,5 @@
 import { RouletteBets } from "../models";
+import { getStartDate } from "../helpers/day-helper";
 
 export default class RouletteBetQuery {
     declare betsRepository: typeof RouletteBets;
@@ -7,16 +8,20 @@ export default class RouletteBetQuery {
         this.betsRepository = betsRepository;
     }
 
-    async getBetHistoryByPlayer(ndays: number) {
-        const startDate = new Date();
-        startDate.setDate(startDate.getDate() - ndays);
+    async getBetHistoryGroupByPlayer(totalDays: number) {
+        const utcStartDate = getStartDate(totalDays);
 
         const results = await this.betsRepository
             .aggregate([
                 {
                     $match: {
-                        time: { $gte: startDate },
                         paid: true,
+                        time: { $gte: utcStartDate },
+                    },
+                },
+                {
+                    $sort: {
+                        time: -1,
                     },
                 },
                 {
@@ -27,6 +32,8 @@ export default class RouletteBetQuery {
                                 totalAmount: "$totalAmount",
                                 betwin: "$betwin",
                                 time: "$time",
+                                guaranteedWinStatus: "$guaranteedWinStatus",
+                                guaranteedLossStatus: "$guaranteedLossStatus",
                             },
                         },
                     },

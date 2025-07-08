@@ -7,6 +7,10 @@ const schema = new mongoose.Schema({
     redBlack: { type: Object },
     oddEven: { type: Object },
     ...BetSchema.betBaseSchema,
+    currencyGroupId: { type: String },
+    guaranteedFeature: { type: Object },
+    guaranteedWinStatus: { type: String, default: "", enum: ["", "normal", "weakened"] },
+    guaranteedLossStatus: { type: String, default: "", enum: ["", "normal", "weakened"] },
 });
 
 const modelName = "miniroulette_bets";

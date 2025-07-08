@@ -13,12 +13,12 @@ export default class SocketRouter extends Core.Routers.BaseSocketRouter {
         this.socketClient.on("spin", this.handleSpin.bind(this));
     }
 
-    handleSpin() {
+    async handleSpin() {
         try {
             if (!this.verify()) {
                 return;
             }
-            this.spinConsumer.consume(this.gameData.realPlayers[this.socketClient.id]);
+            await this.spinConsumer.consume(this.gameData.realPlayers[this.socketClient.id]);
         } catch (error) {
             this.logService.logError(error);
         }

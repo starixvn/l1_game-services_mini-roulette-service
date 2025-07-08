@@ -53,7 +53,6 @@ export default class RouletteSpinConsumer {
 
     verifyCriteria(criteria: { failure: boolean; errorCode: string }[], player: any) {
         const failedCriterion = criteria.find((criterion) => criterion.failure);
-
         if (failedCriterion) {
             const { errorCode } = failedCriterion;
             this.publisher.publishToUser(player.UID, { endBet: -1, notice: { errorCode } });
@@ -62,12 +61,12 @@ export default class RouletteSpinConsumer {
         return failedCriterion === undefined;
     }
 
-    consume(player: any) {
+    async consume(player: any) {
         if (!this.validateRequest(player)) {
             return;
         }
         const playerName = player?.profile?.name;
         const playerData = this.gameData.ingame?.[playerName];
-        this.settleGameRoundConsumer.settleRoundById(playerData.roundId);
+        await this.settleGameRoundConsumer.settleRoundById(playerData.roundId);
     }
 }

@@ -52,7 +52,9 @@ export default class RouletteSettleGameRoundConsumer extends SettleGameRoundCons
         bet.guaranteedLossStatus = guaranteedFeature?.guaranteedLossStatus;
 
         await bet.save();
-        await this.callEndGame(bet, id, time, betResult);
+
+        const metaData = this.createMetadata(bet, settlementResult);
+        await this.callEndGame(bet, id, time, betResult, metaData);
 
         this.captureBetHistory(bet.uid, betResult, bet.time, guaranteedFeature);
         this.userBetResultPublisher.publish(bet.uid, betResult);
@@ -63,7 +65,7 @@ export default class RouletteSettleGameRoundConsumer extends SettleGameRoundCons
         if (!bet) {
             return null;
         }
-        const { roundId, uid, name } = bet;
+        const { roundId, uid } = bet;
         const round = await this.roundsRepository.findOne({ id: roundId }).lean().exec();
         if (round) {
             return round;
@@ -84,38 +86,36 @@ export default class RouletteSettleGameRoundConsumer extends SettleGameRoundCons
         }
     }
 
-        // Create metadata from bet log choices
-        const metaData = this.createBetChoiceMetadata(bet,settlementResult, odds);
-
-    }
-
-    private createBetChoiceMetadata(bet: RouletteBet, settlementResult: SettlementResult, odds: Record<string, number>) {
+    createMetadata(bet: RouletteBet, settlementResult: SettlementResult) {
+        const odds = bet.odds || this.gameData.gameConfigs.odds;
         const betDetails: Array<{ ChoiceId: number; ValidBetAmount: number; TotalAmount: number; TotalWin: number }> = [];
-        const betTypes = Object.values(constants.betTypes);
+        const betTypes = Object.values(Constants.betTypes);
 
-        betTypes.forEach(betType => {
+        betTypes.forEach((betType) => {
             const betChoices = bet[betType as keyof RouletteBet] as Record<string, number> | undefined;
             if (!betChoices) return;
 
             const oddsOfType = odds?.[betType] ?? 0;
 
             Object.entries(betChoices).forEach(([choice, amount]) => {
-                const isWin = settlementResult[betType as keyof SettlementResult].includes(choice);
-                const winAmount = isWin ? amount  * oddsOfType : 0;
+                const isWin = settlementResult[betType as keyof SettlementResult]?.includes(choice);
+                const winAmount = isWin ? amount * oddsOfType : 0;
                 const choiceId = mapBetChoiceToId(betType, choice);
-                
+
                 betDetails.push({
                     ChoiceId: choiceId,
                     ValidBetAmount: amount,
                     TotalAmount: amount,
-                    TotalWin: winAmount
+                    TotalWin: winAmount,
                 });
             });
         });
 
         return {
-            BetDetails: betDetails
+            BetDetails: betDetails,
         };
+    }
+
     resetPlayerData(playerName: string) {
         delete this.gameData.ingame[playerName];
     }

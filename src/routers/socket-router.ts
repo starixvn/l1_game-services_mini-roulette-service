@@ -7,7 +7,7 @@ export default class SocketRouter extends Core.Routers.BaseSocketRouter {
     constructor(props: any) {
         super(props);
         this.spinConsumer = props.spinConsumer;
-        this.leaderboardConsumer = props.leaderBoardConsumer;
+        this.leaderboardConsumer = props.leaderboardConsumer;
     }
 
     init(socketClient: any) {

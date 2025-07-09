@@ -26,6 +26,7 @@ export default class RouletteStartup extends BaseGameStartup {
         try {
             await this.gameCron.start();
             this.processBetQueue.start();
+            this.leaderBoardAccumulator.start();
         } catch (error) {
             logger.logError(error);
         }

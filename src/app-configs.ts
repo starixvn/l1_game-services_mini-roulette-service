@@ -51,4 +51,5 @@ export default {
     gameManagementApiSettings: {
         BASE: "https://l2-proxy1.lumigame.com/game-management-service",
     },
+    cronTimeGetLeaderboard: "* * * * *",
 };

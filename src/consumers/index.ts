@@ -4,5 +4,14 @@ import RoundResultConsumer from "./roulette-round-result-consumer";
 import InGameConsumer from "./roulette-in-game-consumer";
 import SpinConsumer from "./roulette-spin-consumer";
 import GuaranteedFeatureConsumer from "./roulette-guaranteed-feature-consumer";
+import OutGameConsumer from "./roulette-out-game-consumer";
 
-export { PlaceBetConsumer, SettleGameRoundConsumer, RoundResultConsumer, InGameConsumer, SpinConsumer, GuaranteedFeatureConsumer };
+export {
+    PlaceBetConsumer,
+    SettleGameRoundConsumer,
+    RoundResultConsumer,
+    InGameConsumer,
+    SpinConsumer,
+    GuaranteedFeatureConsumer,
+    OutGameConsumer,
+};

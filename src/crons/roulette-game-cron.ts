@@ -66,6 +66,18 @@ export default class RouletteGameCron extends Core.Crons.BaseGameCron {
 
         if (remainingTime < 0) {
             this.gameData.remainingTime = durations.wholeRound;
+            const now = new Date().getTime();
+            await Promise.all(
+                Object.values(this.gameData.ingame)
+                    .filter(
+                        (playerBet) =>
+                            Object.keys(playerBet.betTracks).length > 0 &&
+                            playerBet.roundId > 0 &&
+                            playerBet.betQueue?.length === 0 &&
+                            playerBet.betStartTime?.getTime() > now - durations.wholeRound * 1000
+                    )
+                    .map((playerBet) => this.settleGameRoundConsumer.settleRoundById(playerBet.roundId))
+            );
         }
     }
 }

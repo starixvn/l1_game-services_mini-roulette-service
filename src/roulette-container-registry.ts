@@ -8,6 +8,7 @@ import {
     InGameConsumer,
     SpinConsumer,
     GuaranteedFeatureConsumer,
+    OutGameConsumer,
 } from "./consumers";
 import { RouletteGameCron, RouletteProcessBetQueue } from "./crons";
 import { RouletteBets, RouletteRounds, RouletteBetLogs } from "./models";
@@ -21,7 +22,7 @@ export default class RouletteContainerRegistry extends Table.TableContainerRegis
         this.container.register({
             inGameConsumer: asClass(InGameConsumer).singleton(),
             placeBetConsumer: asClass(PlaceBetConsumer).singleton(),
-            userDisconnectConsumer: asClass(Core.BaseEventConsumers.UserDisconnectConsumer).singleton(),
+            userDisconnectConsumer: asClass(OutGameConsumer).singleton(),
             roundResultConsumer: asClass(RoundResultConsumer).singleton().proxy(),
             settleGameRoundConsumer: asClass(SettleGameRoundConsumer).singleton().proxy(),
             spinConsumer: asClass(SpinConsumer).singleton().proxy(),

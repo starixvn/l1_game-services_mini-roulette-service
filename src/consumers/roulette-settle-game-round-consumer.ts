@@ -5,7 +5,6 @@ import { GuaranteedStatus, RouletteBet, SettlementResult } from "../types";
 import { RouletteGameData } from "../roulette-game-data";
 import RouletteGuaranteedFeatureConsumer from "./roulette-guaranteed-feature-consumer";
 import Constants from "../constants";
-import { mapBetChoiceToId } from "../helpers/choice-helper";
 
 export default class RouletteSettleGameRoundConsumer extends SettleGameRoundConsumer {
     declare gameData: RouletteGameData;
@@ -100,7 +99,7 @@ export default class RouletteSettleGameRoundConsumer extends SettleGameRoundCons
             Object.entries(betChoices).forEach(([choice, amount]) => {
                 const isWin = settlementResult[betType as keyof SettlementResult]?.includes(choice);
                 const winAmount = isWin ? amount * oddsOfType : 0;
-                const choiceId = mapBetChoiceToId(betType, choice);
+                const choiceId = (this.definition.choicesMapper as Record<string, Record<string, number>>)?.[betType]?.[choice] ?? 0;
 
                 betDetails.push({
                     ChoiceId: choiceId,

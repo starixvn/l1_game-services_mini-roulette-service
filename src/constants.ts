@@ -16,7 +16,7 @@ export default {
         weakened: "weakened",
         exited: "",
     },
-    betChoices: {
+    choicesMapper: {
         straightUp: {
             "1": 1,
             "2": 2,
@@ -57,8 +57,8 @@ export default {
             "0": 37,
         },
         redBlack: {
-            "black": 38,
-            "red": 39,
+            black: 38,
+            red: 39,
         },
         dozen: {
             "1": 40,
@@ -66,8 +66,8 @@ export default {
             "3": 42,
         },
         oddEven: {
-            "even": 43,
-            "odd": 44,
+            even: 43,
+            odd: 44,
         },
-    }
+    },
 };

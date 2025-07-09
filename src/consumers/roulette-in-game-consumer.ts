@@ -21,13 +21,10 @@ export default class RouletteInGameConsumer extends Core.BaseEventConsumers.InGa
         const { session } = realPlayer;
         const rate = exchangeRates.code[session.currencyCode] * session.multiplier;
         const gameConfigs = this.getGameConfigs(realPlayer);
-        const { ownBets, roundId } = this.gameData.ingame[realPlayer.profile.name] || { ownBets: {}, roundId: 0 };
 
         return {
             gameConfigs,
             roundHistory,
-            ownBets,
-            roundId,
             user: { ...user, rate },
         };
     }

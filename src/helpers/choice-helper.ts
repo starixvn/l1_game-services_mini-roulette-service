@@ -92,8 +92,3 @@ export const trackBetChoices = (
         }
     });
 };
-
-export const mapBetChoiceToId = (betType: string, choice: string): number => {
-    const { betChoices } = Constants;
-    return (betChoices as Record<string, Record<string, number>>)[betType]?.[choice] ?? 0;
-};

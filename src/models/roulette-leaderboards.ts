@@ -4,8 +4,6 @@ interface IRouletteLeaderboard extends Document {
     date: string;
     leaderboard: Array<{
         uid: string;
-        playerName: string;
-        avatarId: string;
         totalWin: number;
         rank: number;
     }>;
@@ -18,11 +16,10 @@ const RouletteLeaderboardSchema = new mongoose.Schema<IRouletteLeaderboard>({
     leaderboard: [
         {
             uid: String,
-            playerName: String,
-            avatarId: String,
             totalWin: Number,
             rank: Number,
         },
+        { _id: false }, // This prevents MongoDB from creating _id fields for array items
     ],
     updatedAt: { type: Date, default: Date.now },
     lastProcessedTime: { type: Date, default: null },

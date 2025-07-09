@@ -6,6 +6,7 @@ import SpinConsumer from "./roulette-spin-consumer";
 import GuaranteedFeatureConsumer from "./roulette-guaranteed-feature-consumer";
 import OutGameConsumer from "./roulette-out-game-consumer";
 import RouletteLeaderboardConsumer from "./roulette-leaderboard-consumer";
+import LangliveUserSettingConsumer from "./langlive-user-setting-consumer";
 
 export {
     PlaceBetConsumer,
@@ -16,4 +17,5 @@ export {
     GuaranteedFeatureConsumer,
     OutGameConsumer,
     RouletteLeaderboardConsumer,
+    LangliveUserSettingConsumer,
 };

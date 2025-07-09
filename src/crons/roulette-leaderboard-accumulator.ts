@@ -1,6 +1,7 @@
 import GameManagementApiClientFactory, { getOrDefault } from "sc-game-base/src/core/game-management-api";
 import cron from "cron";
 import { RouletteBets, RouletteLeaderboardModel } from "../models";
+import { LangliveUserSettingConsumer } from "../consumers";
 
 export default class RouletteLeaderboardAccumulator {
     logService: any;
@@ -9,23 +10,23 @@ export default class RouletteLeaderboardAccumulator {
 
     appConfigs: any;
 
-    gameManagementApiClient: any;
+    langliveUserSettingConsumer: LangliveUserSettingConsumer;
 
     constructor({
         definition,
         appConfigs,
         logService,
-        gameManagementApiClientFactory,
+        langliveUserSettingConsumer,
     }: {
         definition: any;
         appConfigs: any;
         logService: any;
-        gameManagementApiClientFactory: GameManagementApiClientFactory;
+        langliveUserSettingConsumer: LangliveUserSettingConsumer;
     }) {
         this.definition = definition;
         this.appConfigs = appConfigs;
         this.logService = logService;
-        this.gameManagementApiClient = gameManagementApiClientFactory.instance();
+        this.langliveUserSettingConsumer = langliveUserSettingConsumer;
     }
 
     start() {
@@ -85,11 +86,8 @@ export default class RouletteLeaderboardAccumulator {
                 const entry = leaderboardMap.get(uid);
                 entry.totalWin += totalWin;
             } else {
-                const playerInfo = await this.getPlayerInfo(uid);
                 leaderboardMap.set(uid, {
                     uid,
-                    playerName: playerInfo.name,
-                    avatarId: playerInfo.avatarId,
                     totalWin,
                     rank: 0,
                 });
@@ -111,16 +109,5 @@ export default class RouletteLeaderboardAccumulator {
             },
             { upsert: true }
         );
-    }
-
-    async getPlayerInfo(uid: string) {
-        const playerInfo = await getOrDefault(this.gameManagementApiClient.users.getUserInfo(uid), {
-            avatarId: "",
-            name: "",
-        });
-        return {
-            avatarId: playerInfo.avatarId,
-            name: playerInfo.name,
-        };
     }
 }

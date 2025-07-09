@@ -10,6 +10,7 @@ import {
     GuaranteedFeatureConsumer,
     OutGameConsumer,
     RouletteLeaderboardConsumer,
+    LangliveUserSettingConsumer,
 } from "./consumers";
 import { RouletteGameCron, RouletteLeaderboardAccumulator, RouletteProcessBetQueue } from "./crons";
 import { RouletteBets, RouletteRounds, RouletteBetLogs } from "./models";
@@ -29,6 +30,7 @@ export default class RouletteContainerRegistry extends Table.TableContainerRegis
             spinConsumer: asClass(SpinConsumer).singleton().proxy(),
             guaranteedFeatureConsumer: asClass(GuaranteedFeatureConsumer).singleton().proxy(),
             leaderboardConsumer: asClass(RouletteLeaderboardConsumer).singleton().proxy(),
+            langliveUserSettingConsumer: asClass(LangliveUserSettingConsumer).singleton().proxy(),
         });
     }
 

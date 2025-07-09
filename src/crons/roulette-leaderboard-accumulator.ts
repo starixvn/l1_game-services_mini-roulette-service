@@ -109,7 +109,7 @@ export default class RouletteLeaderboardAccumulator {
                 updatedAt: new Date(),
                 lastProcessedTime: newestTime,
             },
-            { upsert: true, new: true }
+            { upsert: true }
         );
     }
 

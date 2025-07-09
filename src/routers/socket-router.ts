@@ -27,12 +27,14 @@ export default class SocketRouter extends Core.Routers.BaseSocketRouter {
         }
     }
 
-    async handleGetLeaderboard() {
+    async handleGetLeaderboard(payload: any) {
         try {
             if (!this.verify()) {
                 return;
             }
-            const leaderboard = await this.leaderboardConsumer.consume(this.gameData.realPlayers[this.socketClient.id]);
+            const leaderboard = await this.leaderboardConsumer.consume(this.gameData.realPlayers[this.socketClient.id], {
+                top: payload?.top ?? 30,
+            });
             this.socketClient.emit(this.definition.name, {
                 leaderboard,
             });

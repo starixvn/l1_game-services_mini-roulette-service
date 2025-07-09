@@ -1,8 +1,8 @@
 import BaseGameStartup from "sc-game-base/src/core/base-game-startup";
-import { RouletteLeaderBoardAccumulator } from "./crons/roulette-leader-board-accumulator";
 import { Server } from "socket.io";
 import { logger } from "sc-common";
 import express from "express";
+import { RouletteLeaderBoardAccumulator } from "./crons";
 
 export default class RouletteStartup extends BaseGameStartup {
     leaderBoardAccumulator: RouletteLeaderBoardAccumulator;

@@ -1,4 +1,4 @@
-import { Model, model, Schema } from "mongoose";
+import mongoose from "mongoose";
 
 interface IRouletteLeaderboard extends Document {
     date: string;
@@ -14,8 +14,8 @@ interface IRouletteLeaderboard extends Document {
     lastProcessedTime: Date | null;
 }
 
-const RouletteLeaderboardSchema = new Schema<IRouletteLeaderboard>({
-    date: { type: String, required: true, unique: true },
+const RouletteLeaderboardSchema = new mongoose.Schema<IRouletteLeaderboard>({
+    date: { type: String, required: true, unique: true, index: true },
     leaderboard: [
         {
             uid: String,
@@ -30,7 +30,7 @@ const RouletteLeaderboardSchema = new Schema<IRouletteLeaderboard>({
     lastProcessedTime: { type: Date, default: null },
 });
 
-const RouletteLeaderboardModel: Model<IRouletteLeaderboard> = model<IRouletteLeaderboard>(
+const RouletteLeaderboardModel: mongoose.Model<IRouletteLeaderboard> = mongoose.model<IRouletteLeaderboard>(
     "miniroulette_leaderboards",
     RouletteLeaderboardSchema
 );

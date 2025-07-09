@@ -1,6 +1,5 @@
 import { Core } from "sc-game-base";
-import { SpinConsumer } from "../consumers";
-import RouletteLeaderBoardConsumer from "../consumers/roulette-leader-board-consumer";
+import { SpinConsumer, RouletteLeaderBoardConsumer } from "../consumers";
 
 export default class SocketRouter extends Core.Routers.BaseSocketRouter {
     spinConsumer: SpinConsumer;

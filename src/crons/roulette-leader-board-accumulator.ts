@@ -1,10 +1,9 @@
 import GameManagementApiClientFactory, { getOrDefault } from "sc-game-base/src/core/game-management-api";
-import { RouletteBets } from "../models/roulette-bets";
-import RouletteLeaderboardModel from "../models/roulette-leader-boards";
 import cron from "cron";
 import { gameManagementClient } from "sc-game-management-client";
+import { RouletteBets, RouletteLeaderboardModel } from "../models";
 
-export class RouletteLeaderBoardAccumulator {
+export default class RouletteLeaderBoardAccumulator {
     logService: any;
 
     definition: any;
@@ -17,17 +16,17 @@ export class RouletteLeaderBoardAccumulator {
         definition,
         appConfigs,
         logService,
-        gameManagementApiClient,
+        gameManagementApiClientFactory,
     }: {
         definition: any;
         appConfigs: any;
         logService: any;
-        gameManagementApiClient: GameManagementApiClientFactory;
+        gameManagementApiClientFactory: GameManagementApiClientFactory;
     }) {
         this.definition = definition;
         this.appConfigs = appConfigs;
         this.logService = logService;
-        this.gameManagementApiClient = gameManagementApiClient.instance();
+        this.gameManagementApiClient = gameManagementApiClientFactory.instance();
     }
 
     start() {
@@ -62,7 +61,7 @@ export class RouletteLeaderBoardAccumulator {
         });
 
         if (!newBets.length) {
-            await RouletteLeaderboardModel.findOneAndUpdate({ date: dateKey }, { updatedAt: new Date() }, { upsert: true, new: true });
+            await RouletteLeaderboardModel.findOneAndUpdate({ date: dateKey }, { updatedAt: new Date() }, { upsert: true });
             return;
         }
 

@@ -1,4 +1,4 @@
-import RouletteLeaderboardModel from "../models/roulette-leader-boards";
+import { RouletteLeaderboardModel } from "../models";
 import { RouletteGameData } from "../roulette-game-data";
 
 export default class RouletteLeaderBoardConsumer {

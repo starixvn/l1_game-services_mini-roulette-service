@@ -9,13 +9,12 @@ import {
     SpinConsumer,
     GuaranteedFeatureConsumer,
     OutGameConsumer,
+    RouletteLeaderBoardConsumer,
 } from "./consumers";
-import { RouletteGameCron, RouletteProcessBetQueue } from "./crons";
+import { RouletteGameCron, RouletteLeaderBoardAccumulator, RouletteProcessBetQueue } from "./crons";
 import { RouletteBets, RouletteRounds, RouletteBetLogs } from "./models";
 import { HttpRouter, SocketRouter } from "./routers";
 import { RouletteBetQuery, RouletteHistoryQuery, RouletteRoundQuery } from "./query-apis";
-import RouletteLeaderBoardConsumer from "./consumers/roulette-leader-board-consumer";
-import { RouletteLeaderBoardAccumulator } from "./crons/roulette-leader-board-accumulator";
 
 export default class RouletteContainerRegistry extends Table.TableContainerRegistry {
     registerConsumers() {

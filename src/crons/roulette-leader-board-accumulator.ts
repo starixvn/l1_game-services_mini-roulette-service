@@ -1,6 +1,5 @@
 import GameManagementApiClientFactory, { getOrDefault } from "sc-game-base/src/core/game-management-api";
 import cron from "cron";
-import { gameManagementClient } from "sc-game-management-client";
 import { RouletteBets, RouletteLeaderboardModel } from "../models";
 
 export default class RouletteLeaderBoardAccumulator {
@@ -10,7 +9,7 @@ export default class RouletteLeaderBoardAccumulator {
 
     appConfigs: any;
 
-    gameManagementApiClient: gameManagementClient;
+    gameManagementApiClient: any;
 
     constructor({
         definition,

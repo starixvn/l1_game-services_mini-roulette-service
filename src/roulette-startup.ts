@@ -2,13 +2,13 @@ import BaseGameStartup from "sc-game-base/src/core/base-game-startup";
 import { Server } from "socket.io";
 import { logger } from "sc-common";
 import express from "express";
-import { RouletteLeaderBoardAccumulator } from "./crons";
+import { RouletteLeaderboardAccumulator } from "./crons";
 
 export default class RouletteStartup extends BaseGameStartup {
-    leaderBoardAccumulator: RouletteLeaderBoardAccumulator;
+    leaderboardAccumulator: RouletteLeaderboardAccumulator;
     constructor(container: any) {
         super(container);
-        this.leaderBoardAccumulator = this.container.resolve("leaderBoardAccumulator");
+        this.leaderboardAccumulator = this.container.resolve("leaderboardAccumulator");
     }
 
     async start(app: express.Express, socketServer: Server) {
@@ -26,7 +26,7 @@ export default class RouletteStartup extends BaseGameStartup {
         try {
             await this.gameCron.start();
             this.processBetQueue.start();
-            this.leaderBoardAccumulator.start();
+            this.leaderboardAccumulator.start();
         } catch (error) {
             logger.logError(error);
         }

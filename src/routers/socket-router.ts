@@ -1,13 +1,13 @@
 import { Core } from "sc-game-base";
-import { SpinConsumer, RouletteLeaderBoardConsumer } from "../consumers";
+import { SpinConsumer, RouletteLeaderboardConsumer } from "../consumers";
 
 export default class SocketRouter extends Core.Routers.BaseSocketRouter {
     spinConsumer: SpinConsumer;
-    leaderBoardConsumer: RouletteLeaderBoardConsumer;
+    leaderboardConsumer: RouletteLeaderboardConsumer;
     constructor(props: any) {
         super(props);
         this.spinConsumer = props.spinConsumer;
-        this.leaderBoardConsumer = props.leaderBoardConsumer;
+        this.leaderboardConsumer = props.leaderBoardConsumer;
     }
 
     init(socketClient: any) {
@@ -32,7 +32,7 @@ export default class SocketRouter extends Core.Routers.BaseSocketRouter {
             if (!this.verify()) {
                 return;
             }
-            const leaderboard = await this.leaderBoardConsumer.consume(this.gameData.realPlayers[this.socketClient.id]);
+            const leaderboard = await this.leaderboardConsumer.consume(this.gameData.realPlayers[this.socketClient.id]);
             this.socketClient.emit(this.definition.name, {
                 leaderboard,
             });

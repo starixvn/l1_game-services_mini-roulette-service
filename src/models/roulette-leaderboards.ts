@@ -7,7 +7,6 @@ interface IRouletteLeaderboard extends Document {
         playerName: string;
         avatarId: string;
         totalWin: number;
-        totalAmount: number;
         rank: number;
     }>;
     updatedAt: Date;
@@ -22,7 +21,6 @@ const RouletteLeaderboardSchema = new mongoose.Schema<IRouletteLeaderboard>({
             playerName: String,
             avatarId: String,
             totalWin: Number,
-            totalAmount: Number,
             rank: Number,
         },
     ],

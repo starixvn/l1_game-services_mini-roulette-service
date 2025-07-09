@@ -9,9 +9,9 @@ import {
     SpinConsumer,
     GuaranteedFeatureConsumer,
     OutGameConsumer,
-    RouletteLeaderBoardConsumer,
+    RouletteLeaderboardConsumer,
 } from "./consumers";
-import { RouletteGameCron, RouletteLeaderBoardAccumulator, RouletteProcessBetQueue } from "./crons";
+import { RouletteGameCron, RouletteLeaderboardAccumulator, RouletteProcessBetQueue } from "./crons";
 import { RouletteBets, RouletteRounds, RouletteBetLogs } from "./models";
 import { HttpRouter, SocketRouter } from "./routers";
 import { RouletteBetQuery, RouletteHistoryQuery, RouletteRoundQuery } from "./query-apis";
@@ -28,7 +28,7 @@ export default class RouletteContainerRegistry extends Table.TableContainerRegis
             settleGameRoundConsumer: asClass(SettleGameRoundConsumer).singleton().proxy(),
             spinConsumer: asClass(SpinConsumer).singleton().proxy(),
             guaranteedFeatureConsumer: asClass(GuaranteedFeatureConsumer).singleton().proxy(),
-            leaderBoardConsumer: asClass(RouletteLeaderBoardConsumer).singleton().proxy(),
+            leaderboardConsumer: asClass(RouletteLeaderboardConsumer).singleton().proxy(),
         });
     }
 
@@ -39,7 +39,7 @@ export default class RouletteContainerRegistry extends Table.TableContainerRegis
             bot: asValue(undefined),
             gameCron: asClass(RouletteGameCron).singleton().proxy(),
             processBetQueue: asClass(RouletteProcessBetQueue).singleton().proxy(),
-            leaderBoardAccumulator: asClass(RouletteLeaderBoardAccumulator).singleton().proxy(),
+            leaderboardAccumulator: asClass(RouletteLeaderboardAccumulator).singleton().proxy(),
         });
     }
 

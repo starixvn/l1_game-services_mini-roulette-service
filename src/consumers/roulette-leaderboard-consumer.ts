@@ -1,7 +1,7 @@
 import { RouletteLeaderboardModel } from "../models";
 import { RouletteGameData } from "../roulette-game-data";
 
-export default class RouletteLeaderBoardConsumer {
+export default class RouletteLeaderboardConsumer {
     gameData: RouletteGameData;
 
     constructor({ gameData }: { gameData: RouletteGameData }) {
@@ -14,7 +14,7 @@ export default class RouletteLeaderBoardConsumer {
     }
 
     async getLeaderboardByDay(date: Date, uid: string) {
-        const key = new Date(date.getFullYear(), date.getMonth(), date.getDate()).toISOString().slice(0, 30);
+        const key = date.toISOString().split("T")[0];
         const leaderboard = await RouletteLeaderboardModel.findOne({ date: key }, { _id: 0, __v: 0 });
         if (!leaderboard) {
             return [];

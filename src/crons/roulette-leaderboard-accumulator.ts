@@ -2,7 +2,7 @@ import GameManagementApiClientFactory, { getOrDefault } from "sc-game-base/src/c
 import cron from "cron";
 import { RouletteBets, RouletteLeaderboardModel } from "../models";
 
-export default class RouletteLeaderBoardAccumulator {
+export default class RouletteLeaderboardAccumulator {
     logService: any;
 
     definition: any;
@@ -68,11 +68,10 @@ export default class RouletteLeaderBoardAccumulator {
         for (const bet of newBets) {
             const uid = bet.uid;
             if (!playerMap.has(uid)) {
-                playerMap.set(uid, { totalWin: 0, totalAmount: 0 });
+                playerMap.set(uid, { totalWin: 0 });
             }
             const entry = playerMap.get(uid);
             entry.totalWin += bet.betwin;
-            entry.totalAmount += bet.totalAmount;
         }
 
         let leaderboard = cache?.leaderboard || [];
@@ -81,11 +80,10 @@ export default class RouletteLeaderBoardAccumulator {
             leaderboardMap.set(entry.uid, { ...entry });
         }
 
-        for (const [uid, { totalWin, totalAmount }] of playerMap.entries()) {
+        for (const [uid, { totalWin }] of playerMap.entries()) {
             if (leaderboardMap.has(uid)) {
                 const entry = leaderboardMap.get(uid);
                 entry.totalWin += totalWin;
-                entry.totalAmount += totalAmount;
             } else {
                 const playerInfo = await this.getPlayerInfo(uid);
                 leaderboardMap.set(uid, {
@@ -93,8 +91,7 @@ export default class RouletteLeaderBoardAccumulator {
                     playerName: playerInfo.name,
                     avatarId: playerInfo.avatarId,
                     totalWin,
-                    totalAmount,
-                    rank: 0, // will be set after sorting
+                    rank: 0,
                 });
             }
         }
@@ -124,16 +121,6 @@ export default class RouletteLeaderBoardAccumulator {
         return {
             avatarId: playerInfo.avatarId,
             name: playerInfo.name,
-        };
-    }
-
-    // Use bitmask to determine if the player wants to show their avatar or name
-    // Left shift 1 to enable avatar, left shift 2 to enable name
-    async getPlayerSettings(uid: string) {
-        const mock = 3;
-        return {
-            enableAvatar: (mock >> 1) & 1,
-            enableName: (mock >> 2) & 1,
         };
     }
 }

@@ -63,8 +63,13 @@ export default class RouletteLeaderboardConsumer {
         const player = leaderboard.leaderboard.find((x) => x.uid === uid);
 
         if (currentPlayerSettings == null) {
-            const userSettings = await this.langliveUserSettingConsumer.getLeaderboardSettings(uid);
-            currentPlayerSettings = userSettings;
+            try {
+                const userSettings = await this.langliveUserSettingConsumer.getLeaderboardSettings(uid);
+                currentPlayerSettings = userSettings;
+            } catch (error) {
+                console.error(`Error getting user settings for current player ${uid}:`, error);
+                currentPlayerSettings = null;
+            }
         }
 
         return {

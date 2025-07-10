@@ -11,6 +11,7 @@ const schema = new mongoose.Schema({
     guaranteedFeature: { type: Object },
     guaranteedWinStatus: { type: String, default: "", enum: ["", "normal", "weakened"] },
     guaranteedLossStatus: { type: String, default: "", enum: ["", "normal", "weakened"] },
+    settlementDetails: { type: Array },
 });
 
 const modelName = "miniroulette_bets";

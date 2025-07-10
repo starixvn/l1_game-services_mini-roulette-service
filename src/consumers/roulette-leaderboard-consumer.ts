@@ -24,7 +24,7 @@ export default class RouletteLeaderboardConsumer {
 
     async getLeaderboardByDay(date: Date, uid: string, top: number) {
         const key = date.toISOString().split("T")[0];
-        const leaderboard = await RouletteLeaderboardModel.findOne({ date: key }, { _id: 0, __v: 0 });
+        const leaderboard = await RouletteLeaderboardModel.findOne({ date: key }, { _id: 0, __v: 0 }).lean();
         if (!leaderboard) {
             return { leaderboard: [], playerRank: -1, time: date.toISOString() };
         }
@@ -35,7 +35,6 @@ export default class RouletteLeaderboardConsumer {
         const enhancedLeaderboard = await Promise.all(
             slicedLeaderboard.map(async (player) => {
                 try {
-                    // Get user settings for this player
                     const userSettings = await this.langliveUserSettingConsumer.getLeaderboardSettings(player.uid);
 
                     const hideAvatar = userSettings.leaderboard?.hideAvatar;
@@ -51,7 +50,6 @@ export default class RouletteLeaderboardConsumer {
                         name: hideName ? null : userSettings.playerName,
                     };
                 } catch (error) {
-                    // If there's an error getting user settings or player info, return player data without avatar/name
                     console.error(`Error getting user settings for player ${player.uid}:`, error);
                     return {
                         ...player,

@@ -68,7 +68,6 @@ export default class LangliveUserSettingConsumer {
 
         const defaultSettings = { hideAvatar: 0, hideName: 0 };
 
-        // Create the document with default settings
         const userSettingLanglive = await LangliveUserSettingsModel.create({
             uid,
             gameId: this.definition.id,
@@ -78,7 +77,6 @@ export default class LangliveUserSettingConsumer {
             avatarId: playerInfo.avatarId,
         });
 
-        // Return without _id field
         const { _id, ...userSettingWithoutId } = userSettingLanglive.toObject();
         return userSettingWithoutId;
     }

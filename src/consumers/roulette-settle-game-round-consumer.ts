@@ -5,6 +5,7 @@ import { GuaranteedStatus, RouletteBet, SettlementResult } from "../types";
 import { RouletteGameData } from "../roulette-game-data";
 import RouletteGuaranteedFeatureConsumer from "./roulette-guaranteed-feature-consumer";
 import Constants from "../constants";
+import notices from "../constants/notices";
 
 export default class RouletteSettleGameRoundConsumer extends SettleGameRoundConsumer {
     declare gameData: RouletteGameData;
@@ -30,7 +31,14 @@ export default class RouletteSettleGameRoundConsumer extends SettleGameRoundCons
 
     async settleRoundById(roundId: number) {
         const bet = await this.betsRepository.findOne({ roundId, paid: false }).exec();
-        bet && (await this.settleBet(bet));
+        if (bet) {
+            if (this.gameData.ingame?.[bet.name]?.settlementProcessing) {
+                this.userBetResultPublisher.publishToUser(bet.uid, { endBet: -1, notice: { errorCode: notices.processingAction } });
+                return;
+            }
+            this.gameData.ingame[bet.name] && (this.gameData.ingame[bet.name].settlementProcessing = true);
+            await this.settleBet(bet);
+        }
     }
 
     async settleBet(bet: mongoose.Document<RouletteBet> & RouletteBet) {

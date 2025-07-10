@@ -36,7 +36,7 @@ export default class RouletteSpinConsumer {
                 player
             );
         }
-        const { betQueue, betTracks, betProcessing, roundId } = this.gameData.ingame?.[playerName] || {
+        const { betQueue, betTracks, betProcessing, roundId, settlementProcessing } = this.gameData.ingame?.[playerName] || {
             betTracks: {},
             betProcessing: true,
             betQueue: [],
@@ -44,6 +44,7 @@ export default class RouletteSpinConsumer {
         };
         const criteria = [
             { failure: betProcessing, errorCode: notices.processingAction },
+            { failure: settlementProcessing, errorCode: notices.processingAction },
             { failure: betQueue.length > 0, errorCode: notices.processingAction },
             { failure: Object.keys(betTracks).length === 0, errorCode: helpers.noticeHelper.invalidBet },
             { failure: !roundId || roundId <= 0, errorCode: helpers.noticeHelper.invalidBet },
@@ -65,8 +66,8 @@ export default class RouletteSpinConsumer {
         if (!this.validateRequest(player)) {
             return;
         }
-        const playerName = player?.profile?.name;
-        const playerData = this.gameData.ingame?.[playerName];
+        const playerName = player.profile.name;
+        const playerData = this.gameData.ingame[playerName];
         await this.settleGameRoundConsumer.settleRoundById(playerData.roundId);
     }
 }

@@ -46,15 +46,15 @@ export default class RouletteLeaderboardConsumer {
 
                     return {
                         ...player,
-                        avatar: hideAvatar ? null : userSettings.avatarId,
-                        name: hideName ? null : userSettings.playerName,
+                        avatarUrl: hideAvatar ? null : userSettings.avatarUrl,
+                        nickname: hideName ? null : userSettings.nickname,
                     };
                 } catch (error) {
                     console.error(`Error getting user settings for player ${player.uid}:`, error);
                     return {
                         ...player,
-                        avatar: null,
-                        name: null,
+                        avatarUrl: null,
+                        nickname: null,
                     };
                 }
             })

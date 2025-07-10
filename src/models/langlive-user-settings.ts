@@ -2,8 +2,8 @@ import mongoose from "mongoose";
 
 interface ILangliveUserSettings extends Document {
     uid: string;
-    avatarId: string;
-    playerName: string;
+    avatarUrl: string;
+    nickname: string;
     leaderboard: {
         hideAvatar: number;
         hideName: number;
@@ -14,8 +14,8 @@ interface ILangliveUserSettings extends Document {
 
 const LangliveUserSettingsSchema = new mongoose.Schema<ILangliveUserSettings>({
     uid: { type: String, required: true },
-    avatarId: { type: String, required: true },
-    playerName: { type: String, required: true },
+    avatarUrl: { type: String, required: true },
+    nickname: { type: String, required: true },
     leaderboard: { type: Object, required: true, _id: false },
     gameId: { type: Number, required: true },
     updatedAt: { type: Date, default: Date.now },

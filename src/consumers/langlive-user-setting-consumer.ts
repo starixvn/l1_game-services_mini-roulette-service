@@ -26,8 +26,8 @@ export default class LangliveUserSettingConsumer {
     }
 
     async getLeaderboardSettings(uid: string): Promise<{
-        avatarId: string;
-        playerName: string;
+        avatarUrl: string;
+        nickname: string;
         leaderboard: {
             hideAvatar: number;
             hideName: number;
@@ -60,8 +60,8 @@ export default class LangliveUserSettingConsumer {
             );
 
             return {
-                avatarId: playerInfo.avatarId,
-                playerName: playerInfo.name,
+                avatarUrl: playerInfo.avatarUrl,
+                nickname: playerInfo.nickname,
                 leaderboard: combinedSettings,
             };
         }
@@ -73,22 +73,22 @@ export default class LangliveUserSettingConsumer {
             gameId: this.definition.id,
             leaderboard: defaultSettings,
             updatedAt: new Date(),
-            playerName: playerInfo.name,
-            avatarId: playerInfo.avatarId,
+            nickname: playerInfo.nickname,
+            avatarUrl: playerInfo.avatarUrl,
         });
 
-        const { _id, ...userSettingWithoutId } = userSettingLanglive.toObject();
+        const { _id, __v, ...userSettingWithoutId } = userSettingLanglive.toObject();
         return userSettingWithoutId;
     }
 
     async getPlayerInfo(uid: string) {
         const playerInfo = await getOrDefault(this.gameManagementApiClient.users.getUserInfo(uid), {
-            avatarId: "",
-            name: "",
+            avatarUrl: "",
+            nickname: "",
         });
         return {
-            avatarId: playerInfo.avatarId,
-            name: playerInfo.name,
+            avatarUrl: playerInfo.playerAvatarUrl,
+            nickname: playerInfo.playerNickname,
         };
     }
 }

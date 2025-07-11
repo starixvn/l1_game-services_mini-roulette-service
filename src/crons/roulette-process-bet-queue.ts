@@ -2,16 +2,74 @@ import { Crons } from "sc-game-base/src/core";
 import { trackBetChoices, buildBetAmountIncrement } from "../helpers/choice-helper";
 import { RouletteBet, RouletteBetLog } from "../types";
 import { RouletteGameData } from "../roulette-game-data";
+import Constants from "../constants";
+import RouletteSettleGameRoundConsumer from "../consumers/roulette-settle-game-round-consumer";
+import { helpers } from "sc-common";
+import notices from "../constants/notices";
 
 export default class RouletteProcessBetQueue extends Crons.ProcessBetQueue {
     declare gameData: RouletteGameData;
+    declare settleGameRoundConsumer: RouletteSettleGameRoundConsumer;
+    constructor(props: any) {
+        super(props);
+        this.settleGameRoundConsumer = props.settleGameRoundConsumer;
+    }
+
     async proceedBet(player: any, payload: any) {
+        const { action } = payload;
+        switch (action) {
+            case Constants.actions.bet:
+                await this.proceedActionBet(player, payload);
+                break;
+            case Constants.actions.settle:
+                await this.proceedActionSettle(player);
+                break;
+            default:
+                break;
+        }
+    }
+
+    private async proceedActionBet(player: any, payload: any) {
         if (this.gameData.ingame?.[player.profile.name]?.roundId === 0) {
             this.gameData.ingame[player.profile.name].roundId = this.gameData.roundId;
             this.gameData.roundId++;
         }
         payload.roundId = this.gameData.ingame?.[player.profile.name]?.roundId ?? this.gameData.roundId;
         await super.proceedBet(player, payload);
+    }
+
+    private async proceedActionSettle(player: any) {
+        if (!this.validateSettleRequest(player)) {
+            return;
+        }
+        const roundId = this.gameData.ingame[player.profile.name].roundId;
+        await this.settleGameRoundConsumer.settleRoundById(roundId);
+    }
+
+    private async validateSettleRequest(player: any) {
+        const playerName = player?.profile?.name;
+        const playerData = this.gameData.ingame?.[playerName];
+        if (!playerData) {
+            this.handleFailedBet(player, { errorCode: helpers.noticeHelper.invalidBet, action: Constants.actions.settle }, null);
+            return false;
+        }
+        const { betQueue, betTracks, roundId } = this.gameData.ingame?.[playerName] || {
+            betTracks: {},
+            betQueue: [],
+            roundId: 0,
+        };
+        const criteria = [
+            { failure: betQueue.length > 0, errorCode: notices.processingAction },
+            { failure: Object.keys(betTracks).length === 0, errorCode: helpers.noticeHelper.invalidBet },
+            { failure: !roundId || roundId <= 0, errorCode: helpers.noticeHelper.invalidBet },
+        ];
+        const failedCriterion = criteria.find((criterion) => criterion.failure);
+        if (failedCriterion) {
+            const { errorCode } = failedCriterion;
+            this.handleFailedBet(player, { errorCode, action: Constants.actions.settle }, null);
+            return false;
+        }
+        return true;
     }
 
     async validateBetRequest(_: unknown, __: unknown) {
@@ -103,7 +161,7 @@ export default class RouletteProcessBetQueue extends Crons.ProcessBetQueue {
     }
 
     decreaseBetTracks(playerName: string, bet: any) {
-        this.adjustBetTracks(playerName, bet, true);
+        bet && this.adjustBetTracks(playerName, bet, true);
     }
 
     adjustBetTracks = (playerName: string, bet: any, reduce = false) => {

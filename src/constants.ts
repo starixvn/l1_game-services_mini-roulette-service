@@ -70,4 +70,8 @@ export default {
             odd: 44,
         },
     },
+    actions: {
+        bet: "bet",
+        settle: "settle",
+    },
 };

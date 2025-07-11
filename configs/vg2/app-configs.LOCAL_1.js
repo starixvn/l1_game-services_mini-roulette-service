@@ -10,7 +10,7 @@ export default {
         },
         useAuthenticate: true,
         requestTimeout: 10000,
-        placeBetTimeout: 2000,
+        placeBetTimeout: 3000,
         enabledApiLogs: true,
     },
     authenticateSettings: {
@@ -59,5 +59,5 @@ export default {
         enabled: true,
         endpoint: "http://10.10.50.69:4318/v1/traces",
     },
-    cronTimeGetLeaderboard: "* * * * *"
+    cronTimeGetLeaderboard: "* * * * *",
 };

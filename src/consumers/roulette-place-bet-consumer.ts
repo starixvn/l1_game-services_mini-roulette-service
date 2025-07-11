@@ -2,6 +2,7 @@ import { helpers } from "sc-common";
 import { PlaceBetConsumer } from "sc-game-base/src/core/event-consumers";
 import notices from "../constants/notices";
 import RouletteGameDefinition from "../roulette-game-definition";
+import Constants from "../constants";
 
 export default class RoulettePlaceBetConsumer extends PlaceBetConsumer {
     declare definition: RouletteGameDefinition;
@@ -75,17 +76,41 @@ export default class RoulettePlaceBetConsumer extends PlaceBetConsumer {
         return [];
     }
 
+    validateClientSeed(request: any) {
+        return [];
+    }
+
+    validateBetRequestParams(request: any) {
+        const { amount, betChoices } = request;
+        const hasBetChoices = betChoices && Object.keys(betChoices).length > 0;
+        const totalChoices = hasBetChoices
+            ? Object.keys(betChoices).reduce((acc, betType) => acc + Object.keys(betChoices[betType]).length, 0)
+            : 0;
+
+        return [
+            {
+                failure: !amount || !betChoices,
+                notice: this.getNoticeObj(helpers.noticeHelper.invalidBet),
+            },
+            {
+                failure: !hasBetChoices || totalChoices > 1,
+                notice: this.getNoticeObj(notices.invalidBetChoice),
+            },
+        ];
+    }
+
     consume(player: any, payload: any) {
         Object.assign(payload, {
             amount: this.calculateTotalAmount(payload.betChoices),
             freeBet: payload.freeBet ?? false,
-            receivedTime: new Date(),
+            receivedTime: payload.receivedTime ?? new Date(),
+            action: Constants.actions.bet,
         });
 
         const { amount, betChoices, freeBet } = payload;
         const name = player.profile.name;
 
-        if (!this.validateBetRequest(player, betChoices, amount, freeBet, 0)) {
+        if (!this.validateRequestParams(payload, player) || !this.validateBetRequest(player, betChoices, amount, freeBet, 0)) {
             return;
         }
 

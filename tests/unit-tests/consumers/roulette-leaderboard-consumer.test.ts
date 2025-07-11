@@ -7,6 +7,13 @@ jest.mock("../../../src/models", () => ({
     },
 }));
 
+jest.mock("sc-common", () => ({
+    logger: {
+        logWarning: jest.fn(),
+        logError: jest.fn(),
+    },
+}));
+
 const { RouletteLeaderboardModel } = require("../../../src/models");
 
 describe("RouletteLeaderboardConsumer", () => {

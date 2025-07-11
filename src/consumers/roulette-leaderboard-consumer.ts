@@ -38,8 +38,8 @@ export default class RouletteLeaderboardConsumer {
                 try {
                     const userSettings = await this.langliveUserSettingConsumer.getLeaderboardSettings(player.uid);
 
-                    const hideAvatar = userSettings?.leaderboard?.hideAvatar;
-                    const hideName = userSettings?.leaderboard?.hideName;
+                    const hideAvatar = Boolean(userSettings?.leaderboard?.hideAvatar);
+                    const hideName = Boolean(userSettings?.leaderboard?.hideName);
 
                     if (player.uid === uid) {
                         currentPlayerSettings = userSettings;
@@ -47,15 +47,15 @@ export default class RouletteLeaderboardConsumer {
 
                     return {
                         ...player,
-                        avatarUrl: hideAvatar ? null : userSettings?.avatarUrl || null,
-                        nickname: hideName ? null : userSettings?.nickname || null,
+                        avatarUrl: hideAvatar ? null : userSettings?.avatarUrl || "",
+                        nickname: hideName ? null : userSettings?.nickname || "",
                     };
                 } catch (error) {
                     logger.logWarning(`Error getting user settings for player ${player.uid}: ${JSON.stringify(error)}`);
                     return {
                         ...player,
-                        avatarUrl: null,
-                        nickname: null,
+                        avatarUrl: "",
+                        nickname: "",
                     };
                 }
             })
@@ -76,7 +76,7 @@ export default class RouletteLeaderboardConsumer {
         return {
             leaderboard: enhancedLeaderboard,
             currentPlayer: {
-                rank: player?.rank,
+                rank: player?.rank || -1,
                 currentPlayerSettings,
             },
             time: leaderboard.updatedAt.toISOString(),

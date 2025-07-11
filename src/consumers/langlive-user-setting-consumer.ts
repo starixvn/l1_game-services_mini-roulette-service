@@ -1,3 +1,4 @@
+import { logger } from "sc-common";
 import { LangliveUserSettingsModel } from "../models";
 import RouletteGameDefinition from "../roulette-game-definition";
 import GameManagementApiClientFactory, { getOrDefault } from "sc-game-base/src/core/game-management-api";
@@ -47,27 +48,35 @@ export default class LangliveUserSettingConsumer {
         };
     }> {
         const projection = { _id: 0, leaderboard: 1, avatarUrl: 1, nickname: 1 };
-        const userSetting = await LangliveUserSettingsModel.findOne({ uid, gameId: this.definition.id }, projection);
+        const userSetting = await LangliveUserSettingsModel.findOne({ uid, gameId: this.definition.id }, projection).lean().exec();
 
         if (userSetting != null) {
             return userSetting;
         }
 
-        const playerInfo = await this.getPlayerInfo(uid);
+        try {
+            const playerInfo = await this.getPlayerInfo(uid);
+            const defaultSettings = await this.getDefaultLeaderboardSettings(uid);
 
-        const defaultSettings = await this.getDefaultLeaderboardSettings(uid);
+            const userSettingLanglive = await LangliveUserSettingsModel.create({
+                uid,
+                gameId: this.definition.id,
+                avatarUrl: playerInfo.avatarUrl,
+                nickname: playerInfo.nickname,
+                leaderboard: defaultSettings,
+            });
 
-        const userSettingLanglive = await LangliveUserSettingsModel.create({
-            uid,
-            gameId: this.definition.id,
-            leaderboard: defaultSettings,
-            updatedAt: new Date(),
-            nickname: playerInfo.nickname,
-            avatarUrl: playerInfo.avatarUrl,
-        });
+            const { _id, __v, ...userSettingWithoutId } = userSettingLanglive.toJSON();
 
-        const { _id, __v, ...userSettingWithoutId } = userSettingLanglive.toObject();
-        return userSettingWithoutId;
+            return userSettingWithoutId;
+        } catch (error) {
+            logger.logWarning(`Error creating user settings: ${JSON.stringify(error)}`);
+            return {
+                avatarUrl: "",
+                nickname: "",
+                leaderboard: { hideAvatar: 0, hideName: 0 },
+            };
+        }
     }
 
     async getPlayerInfo(uid: string) {
@@ -85,7 +94,9 @@ export default class LangliveUserSettingConsumer {
         const otherGameSettings = await LangliveUserSettingsModel.find({
             uid,
             gameId: { $ne: this.definition.id },
-        });
+        })
+            .lean()
+            .exec();
 
         let combinedSettings = { hideAvatar: 0, hideName: 0 };
 

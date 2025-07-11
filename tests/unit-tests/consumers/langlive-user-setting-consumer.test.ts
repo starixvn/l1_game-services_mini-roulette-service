@@ -58,16 +58,19 @@ describe("LangliveUserSettingConsumer", () => {
 
     describe("getDefaultLeaderboardSettings", () => {
         it("should combine settings from other games using bitwise OR", async () => {
-            mockFind.mockResolvedValueOnce([
-                { leaderboard: { hideAvatar: 1, hideName: 0 } },
-                { leaderboard: { hideAvatar: 0, hideName: 1 } },
-            ]);
+            const exec = jest
+                .fn()
+                .mockResolvedValueOnce([{ leaderboard: { hideAvatar: 1, hideName: 0 } }, { leaderboard: { hideAvatar: 0, hideName: 1 } }]);
+            const lean = jest.fn().mockReturnValueOnce({ exec });
+            mockFind.mockReturnValueOnce({ lean });
             const result = await consumer.getDefaultLeaderboardSettings("user1");
             expect(result).toEqual({ hideAvatar: 1, hideName: 1 });
         });
 
         it("should return default if no other game settings exist", async () => {
-            mockFind.mockResolvedValueOnce([]);
+            const exec = jest.fn().mockResolvedValueOnce([]);
+            const lean = jest.fn().mockReturnValueOnce({ exec });
+            mockFind.mockReturnValueOnce({ lean });
             const result = await consumer.getDefaultLeaderboardSettings("user2");
             expect(result).toEqual({ hideAvatar: 0, hideName: 0 });
         });
@@ -95,17 +98,23 @@ describe("LangliveUserSettingConsumer", () => {
     describe("getLeaderboardSettings", () => {
         it("should return userSetting if found", async () => {
             const userSetting = { avatarUrl: "a", nickname: "n", leaderboard: { hideAvatar: 1, hideName: 0 } };
-            mockFindOne.mockResolvedValueOnce(userSetting);
+            const exec = jest.fn().mockResolvedValueOnce(userSetting);
+            const lean = jest.fn().mockReturnValueOnce({ exec });
+            mockFindOne.mockReturnValueOnce({ lean });
             const result = await consumer.getLeaderboardSettings("user3");
+            expect(lean).toHaveBeenCalled();
+            expect(exec).toHaveBeenCalled();
             expect(result).toBe(userSetting);
         });
 
         it("should create default settings if none found", async () => {
-            mockFindOne.mockResolvedValueOnce(null);
+            const exec = jest.fn().mockResolvedValueOnce(null);
+            const lean = jest.fn().mockReturnValueOnce({ exec });
+            mockFindOne.mockReturnValueOnce({ lean });
             mockFind.mockResolvedValueOnce([]);
             jest.spyOn(consumer, "getPlayerInfo").mockResolvedValueOnce({ avatarUrl: "a", nickname: "n" });
             mockCreate.mockResolvedValueOnce({
-                toObject: () => ({
+                toJSON: () => ({
                     avatarUrl: "a",
                     nickname: "n",
                     leaderboard: { hideAvatar: 0, hideName: 0 },
@@ -114,6 +123,7 @@ describe("LangliveUserSettingConsumer", () => {
                     updatedAt: new Date(),
                 }),
             });
+            jest.spyOn(consumer, "getDefaultLeaderboardSettings").mockResolvedValueOnce({ hideAvatar: 0, hideName: 0 });
             const result = await consumer.getLeaderboardSettings("user5");
             expect(result).toMatchObject({
                 avatarUrl: "a",
@@ -136,7 +146,6 @@ describe("LangliveUserSettingConsumer", () => {
 
         it("should return default values if api client fails", async () => {
             gameManagementApiClient.users.getUserInfo.mockRejectedValueOnce(new Error("fail"));
-            // getOrDefault fallback is used in the consumer, but here we simulate the fallback
             const result = await consumer.getPlayerInfo("uid456");
             expect(result).toEqual({ avatarUrl: "", nickname: "" });
         });

@@ -96,7 +96,7 @@ describe("RouletteLeaderboardConsumer", () => {
         mockLangliveUserSettingConsumer.getLeaderboardSettings.mockRejectedValue(new Error("fail"));
         const player = { UID: "user1" };
         const result = await consumer.consume(player, { top: 1 });
-        expect(result.leaderboard[0].avatarUrl).toBeNull();
-        expect(result.leaderboard[0].nickname).toBeNull();
+        expect(result.leaderboard[0].avatarUrl).toBe("");
+        expect(result.leaderboard[0].nickname).toBe("");
     });
 });

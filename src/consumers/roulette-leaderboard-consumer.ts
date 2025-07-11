@@ -39,6 +39,7 @@ export default class RouletteLeaderboardConsumer {
 
         const enhancedLeaderboard = await Promise.all(
             slicedLeaderboard.map(async (player) => {
+                const { uid: _uid, ...rest } = player;
                 try {
                     const userSettings = await this.langliveUserSettingConsumer.getLeaderboardSettings(player.uid);
 
@@ -50,14 +51,15 @@ export default class RouletteLeaderboardConsumer {
                     }
 
                     return {
-                        ...player,
+                        ...rest,
                         avatarUrl: hideAvatar ? null : userSettings?.avatarUrl || "",
                         nickname: hideName ? null : userSettings?.nickname || "",
                     };
                 } catch (error) {
                     this.logService.logError(`Error getting user settings for player ${player.uid}: ${JSON.stringify(error)}`);
+
                     return {
-                        ...player,
+                        ...rest,
                         avatarUrl: "",
                         nickname: "",
                     };

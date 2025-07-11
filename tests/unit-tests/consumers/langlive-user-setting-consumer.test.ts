@@ -2,7 +2,6 @@ const mockFindOneAndUpdate = jest.fn();
 const mockFindOne = jest.fn();
 const mockFind = jest.fn();
 const mockCreate = jest.fn();
-const mockUpdateOne = jest.fn();
 
 jest.mock("sc-game-base/src/core/game-management-api", () => ({
     getOrDefault: (promise: any, defaultValue: any) => promise.then((v: any) => v).catch(() => defaultValue),
@@ -16,7 +15,9 @@ jest.mock("../../../src/models", () => ({
         findOne: mockFindOne,
         find: mockFind,
         create: mockCreate,
-        updateOne: mockUpdateOne,
+        updateOne: jest.fn().mockReturnValue({
+            exec: jest.fn().mockResolvedValue({ upserted: false }),
+        }),
     },
 }));
 
@@ -25,6 +26,7 @@ describe("LangliveUserSettingConsumer", () => {
     let definition: any;
     let gameManagementApiClientFactory: any;
     let gameManagementApiClient: any;
+    let logService: any;
 
     beforeEach(() => {
         jest.clearAllMocks();
@@ -37,7 +39,10 @@ describe("LangliveUserSettingConsumer", () => {
         gameManagementApiClientFactory = {
             instance: () => gameManagementApiClient,
         };
-        consumer = new LangliveUserSettingConsumer({ definition, gameManagementApiClientFactory });
+        logService = {
+            logError: jest.fn(),
+        };
+        consumer = new LangliveUserSettingConsumer({ definition, gameManagementApiClientFactory, logService });
     });
 
     it("should be defined", () => {
@@ -47,7 +52,10 @@ describe("LangliveUserSettingConsumer", () => {
     describe("updateLeaderboardSettings", () => {
         it("should call updateOne with correct params", async () => {
             const payload = { hideAvatar: true, hideName: false };
+            mockFindOneAndUpdate.mockReturnValue({ exec: jest.fn().mockResolvedValue({}) });
+
             await consumer.updateLeaderboardSettings("user1", payload);
+
             expect(mockFindOneAndUpdate).toHaveBeenCalledWith(
                 { uid: "user1", gameId: definition.id },
                 { $set: { leaderboard: { hideAvatar: 1, hideName: 0 } } },
@@ -63,7 +71,9 @@ describe("LangliveUserSettingConsumer", () => {
                 .mockResolvedValueOnce([{ leaderboard: { hideAvatar: 1, hideName: 0 } }, { leaderboard: { hideAvatar: 0, hideName: 1 } }]);
             const lean = jest.fn().mockReturnValueOnce({ exec });
             mockFind.mockReturnValueOnce({ lean });
+
             const result = await consumer.getDefaultLeaderboardSettings("user1");
+
             expect(result).toEqual({ hideAvatar: 1, hideName: 1 });
         });
 
@@ -71,27 +81,43 @@ describe("LangliveUserSettingConsumer", () => {
             const exec = jest.fn().mockResolvedValueOnce([]);
             const lean = jest.fn().mockReturnValueOnce({ exec });
             mockFind.mockReturnValueOnce({ lean });
+
             const result = await consumer.getDefaultLeaderboardSettings("user2");
+
             expect(result).toEqual({ hideAvatar: 0, hideName: 0 });
         });
     });
 
     describe("updateImageAndNickname", () => {
         it("should call updateOne with correct params", async () => {
-            mockUpdateOne.mockResolvedValueOnce({ upserted: false });
+            const mockExec = jest.fn().mockResolvedValue({ upserted: false });
+            const mockUpdateOneWithExec = jest.fn().mockReturnValue({ exec: mockExec });
+            const originalUpdateOne = require("../../../src/models").LangliveUserSettingsModel.updateOne;
+            require("../../../src/models").LangliveUserSettingsModel.updateOne = mockUpdateOneWithExec;
+
             await consumer.updateImageAndNickname("user2", { avatarUrl: "url", nickname: "nick" });
-            expect(mockUpdateOne).toHaveBeenCalledWith(
+
+            expect(mockUpdateOneWithExec).toHaveBeenCalledWith(
                 { uid: "user2", gameId: definition.id },
                 { $set: { avatarUrl: "url", nickname: "nick" } },
                 { upsert: true }
             );
+
+            require("../../../src/models").LangliveUserSettingsModel.updateOne = originalUpdateOne;
         });
 
-        it("should call getDefaultLeaderboardSettings if upserted is true", async () => {
-            mockUpdateOne.mockResolvedValueOnce({ upserted: true });
+        it("should call updateOne 2 times if upserted is true", async () => {
+            const mockExec = jest.fn().mockResolvedValue({ upserted: true });
+            const mockUpdateOneWithExec = jest.fn().mockReturnValue({ exec: mockExec });
+            const originalUpdateOne = require("../../../src/models").LangliveUserSettingsModel.updateOne;
+            require("../../../src/models").LangliveUserSettingsModel.updateOne = mockUpdateOneWithExec;
             jest.spyOn(consumer, "getDefaultLeaderboardSettings").mockResolvedValueOnce({ hideAvatar: 0, hideName: 0 });
+
             await consumer.updateImageAndNickname("user2", { avatarUrl: "url", nickname: "nick" });
-            expect(mockUpdateOne).toHaveBeenCalledTimes(2);
+
+            expect(mockUpdateOneWithExec).toHaveBeenCalledTimes(2);
+
+            require("../../../src/models").LangliveUserSettingsModel.updateOne = originalUpdateOne;
         });
     });
 
@@ -101,7 +127,9 @@ describe("LangliveUserSettingConsumer", () => {
             const exec = jest.fn().mockResolvedValueOnce(userSetting);
             const lean = jest.fn().mockReturnValueOnce({ exec });
             mockFindOne.mockReturnValueOnce({ lean });
+
             const result = await consumer.getLeaderboardSettings("user3");
+
             expect(lean).toHaveBeenCalled();
             expect(exec).toHaveBeenCalled();
             expect(result).toBe(userSetting);
@@ -112,25 +140,26 @@ describe("LangliveUserSettingConsumer", () => {
             const lean = jest.fn().mockReturnValueOnce({ exec });
             mockFindOne.mockReturnValueOnce({ lean });
             mockFind.mockResolvedValueOnce([]);
-            jest.spyOn(consumer, "getPlayerInfo").mockResolvedValueOnce({ avatarUrl: "a", nickname: "n" });
-            mockCreate.mockResolvedValueOnce({
-                toJSON: () => ({
-                    avatarUrl: "a",
-                    nickname: "n",
-                    leaderboard: { hideAvatar: 0, hideName: 0 },
-                    gameId: definition.id,
-                    uid: "user5",
-                    updatedAt: new Date(),
-                }),
+            gameManagementApiClient.users.getUserInfo.mockResolvedValueOnce({
+                playerAvatarUrl: "a",
+                playerNickname: "n",
             });
+            const mockExec = jest.fn().mockResolvedValue({});
+            const mockUpdateOneWithExec = jest.fn().mockReturnValue({ exec: mockExec });
+            const originalUpdateOne = require("../../../src/models").LangliveUserSettingsModel.updateOne;
+            require("../../../src/models").LangliveUserSettingsModel.updateOne = mockUpdateOneWithExec;
             jest.spyOn(consumer, "getDefaultLeaderboardSettings").mockResolvedValueOnce({ hideAvatar: 0, hideName: 0 });
+
             const result = await consumer.getLeaderboardSettings("user5");
+
             expect(result).toMatchObject({
                 avatarUrl: "a",
                 nickname: "n",
                 leaderboard: { hideAvatar: 0, hideName: 0 },
             });
-            expect(mockCreate).toHaveBeenCalled();
+            expect(mockUpdateOneWithExec).toHaveBeenCalled();
+
+            require("../../../src/models").LangliveUserSettingsModel.updateOne = originalUpdateOne;
         });
     });
 
@@ -140,13 +169,17 @@ describe("LangliveUserSettingConsumer", () => {
                 playerAvatarUrl: "avatar",
                 playerNickname: "nick",
             });
+
             const result = await consumer.getPlayerInfo("uid123");
+
             expect(result).toEqual({ avatarUrl: "avatar", nickname: "nick" });
         });
 
         it("should return default values if api client fails", async () => {
             gameManagementApiClient.users.getUserInfo.mockRejectedValueOnce(new Error("fail"));
+
             const result = await consumer.getPlayerInfo("uid456");
+
             expect(result).toEqual({ avatarUrl: "", nickname: "" });
         });
     });

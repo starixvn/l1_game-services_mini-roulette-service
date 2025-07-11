@@ -7,42 +7,48 @@ jest.mock("../../../src/models", () => ({
     },
 }));
 
-jest.mock("sc-common", () => ({
-    logger: {
-        logWarning: jest.fn(),
-        logError: jest.fn(),
-    },
-}));
-
 const { RouletteLeaderboardModel } = require("../../../src/models");
 
 describe("RouletteLeaderboardConsumer", () => {
     let consumer: RouletteLeaderboardConsumer;
     let mockGameData: any;
     let mockLangliveUserSettingConsumer: any;
+    let logService: any;
 
     beforeEach(() => {
         mockGameData = new RouletteGameData(60);
         mockLangliveUserSettingConsumer = {
             getLeaderboardSettings: jest.fn(),
         };
+        logService = {
+            logError: jest.fn(),
+        };
         consumer = new RouletteLeaderboardConsumer({
             gameData: mockGameData,
             langliveUserSettingConsumer: mockLangliveUserSettingConsumer,
+            logService,
         });
         jest.clearAllMocks();
     });
 
     it("should return empty leaderboard if no leaderboard found", async () => {
-        (RouletteLeaderboardModel.findOne as jest.Mock).mockReturnValue({ lean: jest.fn().mockResolvedValue(null) });
+        // Arrange
+        (RouletteLeaderboardModel.findOne as jest.Mock).mockReturnValue({
+            lean: jest.fn().mockResolvedValue(null),
+        });
         const player = { UID: "user1" };
+
+        // Act
         const result = await consumer.consume(player, { top: 10 });
+
+        // Assert
         expect(result.leaderboard).toEqual([]);
         expect(result.currentPlayer.rank).toBe(-1);
         expect(typeof result.time).toBe("string");
     });
 
     it("should return leaderboard with enhanced player info", async () => {
+        // Arrange
         const leaderboardDoc = {
             leaderboard: [
                 { uid: "user1", totalWin: 100, rank: 1 },
@@ -50,7 +56,9 @@ describe("RouletteLeaderboardConsumer", () => {
             ],
             updatedAt: new Date(),
         };
-        (RouletteLeaderboardModel.findOne as jest.Mock).mockReturnValue({ lean: jest.fn().mockResolvedValue(leaderboardDoc) });
+        (RouletteLeaderboardModel.findOne as jest.Mock).mockReturnValue({
+            lean: jest.fn().mockResolvedValue(leaderboardDoc),
+        });
         mockLangliveUserSettingConsumer.getLeaderboardSettings.mockImplementation((uid: string) => {
             return Promise.resolve({
                 avatarUrl: `avatar_${uid}`,
@@ -59,7 +67,11 @@ describe("RouletteLeaderboardConsumer", () => {
             });
         });
         const player = { UID: "user1" };
+
+        // Act
         const result = await consumer.consume(player, { top: 2 });
+
+        // Assert
         expect(result.leaderboard.length).toBe(2);
         expect(result.leaderboard[0].avatarUrl).toBe("avatar_user1");
         expect(result.leaderboard[0].nickname).toBe("nick_user1");
@@ -71,31 +83,45 @@ describe("RouletteLeaderboardConsumer", () => {
     });
 
     it("should handle user settings with hideAvatar/hideName", async () => {
+        // Arrange
         const leaderboardDoc = {
             leaderboard: [{ uid: "user1", totalWin: 100, rank: 1 }],
             updatedAt: new Date(),
         };
-        (RouletteLeaderboardModel.findOne as jest.Mock).mockReturnValue({ lean: jest.fn().mockResolvedValue(leaderboardDoc) });
+        (RouletteLeaderboardModel.findOne as jest.Mock).mockReturnValue({
+            lean: jest.fn().mockResolvedValue(leaderboardDoc),
+        });
         mockLangliveUserSettingConsumer.getLeaderboardSettings.mockResolvedValue({
             avatarUrl: "avatar_user1",
             nickname: "nick_user1",
             leaderboard: { hideAvatar: 1, hideName: 1 },
         });
         const player = { UID: "user1" };
+
+        // Act
         const result = await consumer.consume(player, { top: 1 });
+
+        // Assert
         expect(result.leaderboard[0].avatarUrl).toBeNull();
         expect(result.leaderboard[0].nickname).toBeNull();
     });
 
     it("should handle error in getLeaderboardSettings gracefully", async () => {
+        // Arrange
         const leaderboardDoc = {
             leaderboard: [{ uid: "user1", totalWin: 100, rank: 1 }],
             updatedAt: new Date(),
         };
-        (RouletteLeaderboardModel.findOne as jest.Mock).mockReturnValue({ lean: jest.fn().mockResolvedValue(leaderboardDoc) });
+        (RouletteLeaderboardModel.findOne as jest.Mock).mockReturnValue({
+            lean: jest.fn().mockResolvedValue(leaderboardDoc),
+        });
         mockLangliveUserSettingConsumer.getLeaderboardSettings.mockRejectedValue(new Error("fail"));
         const player = { UID: "user1" };
+
+        // Act
         const result = await consumer.consume(player, { top: 1 });
+
+        // Assert
         expect(result.leaderboard[0].avatarUrl).toBe("");
         expect(result.leaderboard[0].nickname).toBe("");
     });

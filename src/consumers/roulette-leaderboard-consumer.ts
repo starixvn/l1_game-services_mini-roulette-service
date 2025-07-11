@@ -6,16 +6,20 @@ import LangliveUserSettingConsumer from "./langlive-user-setting-consumer";
 export default class RouletteLeaderboardConsumer {
     gameData: RouletteGameData;
     langliveUserSettingConsumer: LangliveUserSettingConsumer;
+    logService: typeof logger;
 
     constructor({
         gameData,
         langliveUserSettingConsumer,
+        logService,
     }: {
         gameData: RouletteGameData;
         langliveUserSettingConsumer: LangliveUserSettingConsumer;
+        logService: typeof logger;
     }) {
         this.gameData = gameData;
         this.langliveUserSettingConsumer = langliveUserSettingConsumer;
+        this.logService = logService;
     }
 
     async consume(player: any, payload: { top: number } = { top: 30 }) {
@@ -51,7 +55,7 @@ export default class RouletteLeaderboardConsumer {
                         nickname: hideName ? null : userSettings?.nickname || "",
                     };
                 } catch (error) {
-                    logger.logWarning(`Error getting user settings for player ${player.uid}: ${JSON.stringify(error)}`);
+                    this.logService.logError(`Error getting user settings for player ${player.uid}: ${JSON.stringify(error)}`);
                     return {
                         ...player,
                         avatarUrl: "",
@@ -68,7 +72,7 @@ export default class RouletteLeaderboardConsumer {
                 const userSettings = await this.langliveUserSettingConsumer.getLeaderboardSettings(uid);
                 currentPlayerSettings = userSettings;
             } catch (error) {
-                logger.logWarning(`Error getting user settings for current player ${uid}: ${JSON.stringify(error)}`);
+                this.logService.logError(`Error getting user settings for current player ${uid}: ${JSON.stringify(error)}`);
                 currentPlayerSettings = null;
             }
         }

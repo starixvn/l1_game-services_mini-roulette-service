@@ -6,16 +6,20 @@ import GameManagementApiClientFactory, { getOrDefault } from "sc-game-base/src/c
 export default class LangliveUserSettingConsumer {
     definition: RouletteGameDefinition;
     gameManagementApiClient: any;
+    logService: typeof logger;
 
     constructor({
         definition,
         gameManagementApiClientFactory,
+        logService,
     }: {
         definition: RouletteGameDefinition;
         gameManagementApiClientFactory: GameManagementApiClientFactory;
+        logService: typeof logger;
     }) {
         this.definition = definition;
         this.gameManagementApiClient = gameManagementApiClientFactory.instance();
+        this.logService = logService;
     }
 
     async updateLeaderboardSettings(uid: string, payload: { hideAvatar: boolean; hideName: boolean }) {
@@ -23,7 +27,7 @@ export default class LangliveUserSettingConsumer {
             { uid, gameId: this.definition.id },
             { $set: { leaderboard: { hideAvatar: payload.hideAvatar ? 1 : 0, hideName: payload.hideName ? 1 : 0 } } },
             { upsert: true }
-        );
+        ).exec();
     }
 
     async updateImageAndNickname(uid: string, payload: { avatarUrl: string; nickname: string }) {
@@ -31,11 +35,14 @@ export default class LangliveUserSettingConsumer {
             { uid, gameId: this.definition.id },
             { $set: { avatarUrl: payload.avatarUrl, nickname: payload.nickname } },
             { upsert: true }
-        );
+        ).exec();
 
         if (userSetting.upserted) {
             const defaultSettings = await this.getDefaultLeaderboardSettings(uid);
-            await LangliveUserSettingsModel.updateOne({ uid, gameId: this.definition.id }, { $set: { leaderboard: defaultSettings } });
+            await LangliveUserSettingsModel.updateOne(
+                { uid, gameId: this.definition.id },
+                { $set: { leaderboard: defaultSettings } }
+            ).exec();
         }
     }
 
@@ -47,7 +54,7 @@ export default class LangliveUserSettingConsumer {
             hideName: number;
         };
     }> {
-        const projection = { _id: 0, leaderboard: 1, avatarUrl: 1, nickname: 1 };
+        const projection = { _id: 0, uid: 0, gameId: 0, leaderboard: 1, avatarUrl: 1, nickname: 1 };
         const userSetting = await LangliveUserSettingsModel.findOne({ uid, gameId: this.definition.id }, projection).lean().exec();
 
         if (userSetting != null) {
@@ -58,19 +65,17 @@ export default class LangliveUserSettingConsumer {
             const playerInfo = await this.getPlayerInfo(uid);
             const defaultSettings = await this.getDefaultLeaderboardSettings(uid);
 
-            const userSettingLanglive = await LangliveUserSettingsModel.create({
-                uid,
-                gameId: this.definition.id,
+            const userSettings = {
                 avatarUrl: playerInfo.avatarUrl,
                 nickname: playerInfo.nickname,
                 leaderboard: defaultSettings,
-            });
+            };
 
-            const { _id, __v, ...userSettingWithoutId } = userSettingLanglive.toJSON();
+            await LangliveUserSettingsModel.updateOne({ uid, gameId: this.definition.id }, { $set: userSettings }, { upsert: true }).exec();
 
-            return userSettingWithoutId;
+            return userSettings;
         } catch (error) {
-            logger.logWarning(`Error creating user settings: ${JSON.stringify(error)}`);
+            this.logService.logError(`Error creating user settings: ${JSON.stringify(error)}`);
             return {
                 avatarUrl: "",
                 nickname: "",

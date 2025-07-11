@@ -16,7 +16,7 @@ const LangliveUserSettingsSchema = new mongoose.Schema<ILangliveUserSettings>({
     uid: { type: String, required: true },
     avatarUrl: { type: String, required: true },
     nickname: { type: String, required: true },
-    leaderboard: { type: Object, required: true, _id: false },
+    leaderboard: { type: Object, required: true, _id: false, default: { hideAvatar: 0, hideName: 0 } },
     gameId: { type: Number, required: true },
     updatedAt: { type: Date, default: Date.now },
 });

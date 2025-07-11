@@ -19,7 +19,7 @@ const RouletteLeaderboardSchema = new mongoose.Schema<IRouletteLeaderboard>({
             totalWin: Number,
             rank: Number,
         },
-        { _id: false }, // This prevents MongoDB from creating _id fields for array items
+        { _id: false },
     ],
     updatedAt: { type: Date, default: Date.now },
     lastProcessedTime: { type: Date, default: null },

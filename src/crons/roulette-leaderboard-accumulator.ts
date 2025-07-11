@@ -103,7 +103,7 @@ export default class RouletteLeaderboardAccumulator {
         await RouletteLeaderboardModel.findOneAndUpdate(
             { date: dateKey },
             {
-                leaderboard: leaderboard.slice(0, 30),
+                leaderboard: leaderboard,
                 updatedAt: new Date(),
                 lastProcessedTime: newestTime,
             },

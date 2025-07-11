@@ -18,7 +18,7 @@ export default class RouletteLeaderboardConsumer {
         this.langliveUserSettingConsumer = langliveUserSettingConsumer;
     }
 
-    async consume(player: any, payload: { top: number }) {
+    async consume(player: any, payload: { top: number } = { top: 30 }) {
         const leaderboard = await this.getLeaderboardByDay(new Date(), player.UID, payload.top);
         return leaderboard;
     }
@@ -27,7 +27,7 @@ export default class RouletteLeaderboardConsumer {
         const key = date.toISOString().split("T")[0];
         const leaderboard = await RouletteLeaderboardModel.findOne({ date: key }, { _id: 0, __v: 0, "leaderboard._id": 0 }).lean();
         if (!leaderboard) {
-            return { leaderboard: [], playerRank: -1, time: date.toISOString() };
+            return { leaderboard: [], currentPlayer: { rank: -1, currentPlayerSettings: null }, time: date.toISOString() };
         }
 
         const slicedLeaderboard = leaderboard.leaderboard.slice(0, top);
@@ -38,8 +38,8 @@ export default class RouletteLeaderboardConsumer {
                 try {
                     const userSettings = await this.langliveUserSettingConsumer.getLeaderboardSettings(player.uid);
 
-                    const hideAvatar = userSettings.leaderboard?.hideAvatar;
-                    const hideName = userSettings.leaderboard?.hideName;
+                    const hideAvatar = userSettings?.leaderboard?.hideAvatar;
+                    const hideName = userSettings?.leaderboard?.hideName;
 
                     if (player.uid === uid) {
                         currentPlayerSettings = userSettings;
@@ -47,8 +47,8 @@ export default class RouletteLeaderboardConsumer {
 
                     return {
                         ...player,
-                        avatarUrl: hideAvatar ? null : userSettings.avatarUrl,
-                        nickname: hideName ? null : userSettings.nickname,
+                        avatarUrl: hideAvatar ? null : userSettings?.avatarUrl || null,
+                        nickname: hideName ? null : userSettings?.nickname || null,
                     };
                 } catch (error) {
                     logger.logWarning(`Error getting user settings for player ${player.uid}: ${JSON.stringify(error)}`);

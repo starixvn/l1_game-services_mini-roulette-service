@@ -46,11 +46,10 @@ describe("LangliveUserSettingConsumer", () => {
 
     describe("updateLeaderboardSettings", () => {
         it("should call updateOne with correct params", async () => {
-            const player = { UID: "user1" };
             const payload = { hideAvatar: true, hideName: false };
-            await consumer.updateLeaderboardSettings(player, payload);
+            await consumer.updateLeaderboardSettings("user1", payload);
             expect(mockFindOneAndUpdate).toHaveBeenCalledWith(
-                { uid: player.UID, gameId: definition.id },
+                { uid: "user1", gameId: definition.id },
                 { $set: { leaderboard: { hideAvatar: 1, hideName: 0 } } },
                 { upsert: true }
             );

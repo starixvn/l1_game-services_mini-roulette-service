@@ -38,7 +38,7 @@ describe("RouletteLeaderboardConsumer", () => {
         const player = { UID: "user1" };
         const result = await consumer.consume(player, { top: 10 });
         expect(result.leaderboard).toEqual([]);
-        expect(result.playerRank).toBe(-1);
+        expect(result.currentPlayer.rank).toBe(-1);
         expect(typeof result.time).toBe("string");
     });
 

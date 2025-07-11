@@ -1,15 +1,17 @@
 import { Core } from "sc-game-base";
-import { ActionSettleConsumer, RouletteLeaderboardConsumer, RebetConsumer } from "../consumers";
+import { ActionSettleConsumer, RouletteLeaderboardConsumer, RebetConsumer, LangliveUserSettingConsumer } from "../consumers";
 
 export default class SocketRouter extends Core.Routers.BaseSocketRouter {
     actionSettleConsumer: ActionSettleConsumer;
     leaderboardConsumer: RouletteLeaderboardConsumer;
     rebetConsumer: RebetConsumer;
+    langliveUserSettingConsumer: LangliveUserSettingConsumer;
     constructor(props: any) {
         super(props);
         this.actionSettleConsumer = props.actionSettleConsumer;
         this.leaderboardConsumer = props.leaderboardConsumer;
         this.rebetConsumer = props.rebetConsumer;
+        this.langliveUserSettingConsumer = props.langliveUserSettingConsumer;
     }
 
     init(socketClient: any) {
@@ -18,6 +20,7 @@ export default class SocketRouter extends Core.Routers.BaseSocketRouter {
         this.socketClient.on("settle", this.handleActionSettle.bind(this));
         this.socketClient.on("getLeaderboard", this.handleGetLeaderboard.bind(this));
         this.socketClient.on("rebet", this.handleRebet.bind(this));
+        this.socketClient.on("updateLeaderboardSettings", this.handleUpdateLeaderboardSettings.bind(this));
     }
 
     handleActionSettle() {
@@ -53,6 +56,19 @@ export default class SocketRouter extends Core.Routers.BaseSocketRouter {
                 return;
             }
             this.rebetConsumer.consume(this.gameData.realPlayers[this.socketClient.id], payload);
+        } catch (error) {
+            this.logService.logError(error);
+        }
+    }
+
+    handleUpdateLeaderboardSettings(payload: any) {
+        try {
+            if (!this.verify()) {
+                return;
+            }
+            if (payload.hideAvatar != undefined && payload.hideName != undefined) {
+                this.langliveUserSettingConsumer.updateLeaderboardSettings(this.gameData.realPlayers[this.socketClient.id].UID, payload);
+            }
         } catch (error) {
             this.logService.logError(error);
         }

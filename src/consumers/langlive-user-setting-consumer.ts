@@ -17,9 +17,9 @@ export default class LangliveUserSettingConsumer {
         this.gameManagementApiClient = gameManagementApiClientFactory.instance();
     }
 
-    async updateLeaderboardSettings(player: any, payload: { hideAvatar: boolean; hideName: boolean }) {
+    async updateLeaderboardSettings(uid: string, payload: { hideAvatar: boolean; hideName: boolean }) {
         await LangliveUserSettingsModel.findOneAndUpdate(
-            { uid: player.UID, gameId: this.definition.id },
+            { uid, gameId: this.definition.id },
             { $set: { leaderboard: { hideAvatar: payload.hideAvatar ? 1 : 0, hideName: payload.hideName ? 1 : 0 } } },
             { upsert: true }
         );
@@ -46,7 +46,7 @@ export default class LangliveUserSettingConsumer {
             hideName: number;
         };
     }> {
-        const projection = { _id: 0, leaderboard: 1 };
+        const projection = { _id: 0, leaderboard: 1, avatarUrl: 1, nickname: 1 };
         const userSetting = await LangliveUserSettingsModel.findOne({ uid, gameId: this.definition.id }, projection);
 
         if (userSetting != null) {

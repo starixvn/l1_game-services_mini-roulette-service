@@ -1,7 +1,6 @@
-import GameManagementApiClientFactory, { getOrDefault } from "sc-game-base/src/core/game-management-api";
 import cron from "cron";
-import { RouletteBets, RouletteLeaderboardModel } from "../models";
 import { LangliveUserSettingConsumer } from "../consumers";
+import { RouletteBets, RouletteLeaderboardModel } from "../models";
 
 export default class RouletteLeaderboardAccumulator {
     logService: any;
@@ -41,12 +40,10 @@ export default class RouletteLeaderboardAccumulator {
                 );
                 job.start();
             },
-            start: true, // Start the schedule immediately
-            runOnInit: true, // <-- This will run the job immediately after definition
+            start: true,
         });
     }
 
-    // Called by cron every 5 minutes
     async accumulateIncremental(date: Date) {
         const start = new Date(date.getFullYear(), date.getMonth(), date.getDate());
         const end = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);

@@ -41,21 +41,22 @@ export default class RouletteLeaderboardAccumulator {
                 job.start();
             },
             start: true,
+            runOnInit: true,
         });
     }
 
     async accumulateIncremental(date: Date) {
         const start = new Date(date.getFullYear(), date.getMonth(), date.getDate());
         const end = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
-        const dateKey = start.toISOString().slice(0, 10);
+        const dateKey = date.toISOString().slice(0, 10);
 
-        let cache = await RouletteLeaderboardModel.findOne({ date: dateKey });
+        let cache = await RouletteLeaderboardModel.findOne({ date: dateKey }).lean();
         let lastProcessedTime = cache?.lastProcessedTime || start;
 
         const newBets = await RouletteBets.find({
             paid: true,
             time: { $gt: lastProcessedTime, $lte: end },
-        });
+        }).lean();
 
         if (!newBets.length) {
             await RouletteLeaderboardModel.findOneAndUpdate({ date: dateKey }, { updatedAt: new Date() }, { upsert: true });

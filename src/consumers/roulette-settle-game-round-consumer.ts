@@ -57,6 +57,7 @@ export default class RouletteSettleGameRoundConsumer extends SettleGameRoundCons
         bet.paid = true;
         bet.guaranteedWinStatus = guaranteedFeature?.guaranteedWinStatus;
         bet.guaranteedLossStatus = guaranteedFeature?.guaranteedLossStatus;
+        bet.accumulatedAmount = guaranteedFeature?.accumulatedAmount;
 
         const metaData = this.createMetadata({ bet, settlementResult, result });
 

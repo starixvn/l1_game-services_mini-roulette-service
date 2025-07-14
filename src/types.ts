@@ -22,6 +22,7 @@ export type RouletteBet = {
     guaranteedFeature?: GuaranteedFeature;
     guaranteedWinStatus?: string;
     guaranteedLossStatus?: string;
+    accumulatedAmount?: number;
     settlementDetails?: Array<{
         choiceId: number;
         totalAmount: number;

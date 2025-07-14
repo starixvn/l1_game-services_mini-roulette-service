@@ -22,6 +22,7 @@ export default class RouletteGuaranteedFeatureConsumer {
                   guaranteedWinStatus: accumulatedAmount < 0 ? reachedStatus.status : "",
                   guaranteedLossStatus: accumulatedAmount > 0 ? reachedStatus.status : "",
                   winningPercentage: reachedStatus.winningPercentage,
+                  accumulatedAmount,
               }
             : null;
     }

@@ -23,6 +23,7 @@ export default class SocketRouter extends Core.Routers.BaseSocketRouter {
         this.socketClient.on("getLeaderboard", this.handleGetLeaderboard.bind(this));
         this.socketClient.on("rebet", this.handleRebet.bind(this));
         this.socketClient.on("updateLeaderboardSettings", this.handleUpdateLeaderboardSettings.bind(this));
+        this.socketClient.on("getLeaderboardSettings", this.handleGetLeaderboardSettings.bind(this));
     }
 
     async handleGetHistory(payload: any) {
@@ -90,6 +91,24 @@ export default class SocketRouter extends Core.Routers.BaseSocketRouter {
             if (payload.hideAvatar != undefined && payload.hideName != undefined) {
                 this.langliveUserSettingConsumer.updateLeaderboardSettings(this.gameData.realPlayers[this.socketClient.id].UID, payload);
             }
+        } catch (error) {
+            this.logService.logError(error);
+        }
+    }
+
+    async handleGetLeaderboardSettings() {
+        try {
+            if (!this.verify()) {
+                return;
+            }
+            const leaderboardSettings = await this.langliveUserSettingConsumer.getLeaderboardSettings(
+                this.gameData.realPlayers[this.socketClient.id].UID
+            );
+            this.socketClient.emit(this.definition.name, {
+                leaderboardSettings: {
+                    ...leaderboardSettings?.leaderboard,
+                },
+            });
         } catch (error) {
             this.logService.logError(error);
         }

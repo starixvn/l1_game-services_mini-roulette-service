@@ -33,7 +33,7 @@ export default class RouletteContainerRegistry extends Table.TableContainerRegis
             guaranteedFeatureConsumer: asClass(GuaranteedFeatureConsumer).singleton().proxy(),
             leaderboardConsumer: asClass(RouletteLeaderboardConsumer).singleton().proxy(),
             langliveUserSettingConsumer: asClass(LangliveUserSettingConsumer).singleton().proxy(),
-            userSigninConsumer: asClass(RouletteUserSigninConsumer).singleton(),
+            userSignInConsumer: asClass(RouletteUserSigninConsumer).singleton(),
             rebetConsumer: asClass(RebetConsumer).singleton().proxy(),
         });
     }

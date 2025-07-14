@@ -22,12 +22,10 @@ export default class RouletteUserSigninConsumer extends Table.EventConsumers.Tab
     handleSignInSuccess(socketClient: Socket, userInfo: any, userSession: any) {
         super.handleSignInSuccess(socketClient, userInfo, userSession);
 
-        const { userId, playerAvatar, playerNickname } = userSession;
+        const { userId, playerAvatarUrl, playerNickname } = userSession;
 
-        if (playerAvatar && playerNickname) {
-            this.langliveUserSettingConsumer.updateImageAndNickname(userId, { avatarUrl: playerAvatar, nickname: playerNickname });
+        if (playerAvatarUrl && playerNickname) {
+            this.langliveUserSettingConsumer.updateImageAndNickname(userId, { avatarUrl: playerAvatarUrl, nickname: playerNickname });
         }
-
-        this.userSignInPublisher.publishToGameMessage(socketClient, this.definition.name);
     }
 }

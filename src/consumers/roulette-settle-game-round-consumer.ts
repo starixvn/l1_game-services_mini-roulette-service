@@ -43,13 +43,13 @@ export default class RouletteSettleGameRoundConsumer extends SettleGameRoundCons
 
         const odds = bet.odds || this.gameData.gameConfigs.odds;
         const betResult = this.calculateBetResult(settlementResult, bet, odds);
-
         bet.betwin = betResult.totalWin;
         bet.paid = true;
         bet.guaranteedWinStatus = guaranteedFeature?.guaranteedWinStatus;
         bet.guaranteedLossStatus = guaranteedFeature?.guaranteedLossStatus;
 
-        const metaData = this.createMetadata(bet, settlementResult);
+        const metaData = this.createMetadata(bet, settlementResult, result);
+        
         bet.settlementDetails = metaData.BetDetails?.map((detail) => ({
             choiceId: detail.ChoiceId,
             totalAmount: detail.TotalAmount,
@@ -90,7 +90,7 @@ export default class RouletteSettleGameRoundConsumer extends SettleGameRoundCons
         }
     }
 
-    createMetadata(bet: RouletteBet, settlementResult: SettlementResult) {
+    createMetadata(bet: RouletteBet, settlementResult: SettlementResult, result: string) {
         const odds = bet.odds || this.gameData.gameConfigs.odds;
         const betDetails: Array<{ ChoiceId: number; ValidBetAmount: number; TotalAmount: number; TotalWin: number }> = [];
         const betTypes = Object.values(Constants.betTypes);
@@ -117,6 +117,7 @@ export default class RouletteSettleGameRoundConsumer extends SettleGameRoundCons
 
         return {
             BetDetails: betDetails,
+            Result: result,
         };
     }
 

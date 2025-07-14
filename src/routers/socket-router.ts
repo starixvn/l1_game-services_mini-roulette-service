@@ -1,14 +1,17 @@
 import { Core } from "sc-game-base";
-import { ActionSettleConsumer, RouletteLeaderboardConsumer, RebetConsumer, LangliveUserSettingConsumer } from "../consumers";
+import { HandleActionSettleConsumer, RouletteLeaderboardConsumer, RebetConsumer, LangliveUserSettingConsumer } from "../consumers";
+import RouletteHistoryQuery from "../query-apis/roulette-history-query";
 
 export default class SocketRouter extends Core.Routers.BaseSocketRouter {
-    actionSettleConsumer: ActionSettleConsumer;
+    handleActionSettleConsumer: HandleActionSettleConsumer;
     leaderboardConsumer: RouletteLeaderboardConsumer;
     rebetConsumer: RebetConsumer;
     langliveUserSettingConsumer: LangliveUserSettingConsumer;
+    declare historyQuery: RouletteHistoryQuery;
+
     constructor(props: any) {
         super(props);
-        this.actionSettleConsumer = props.actionSettleConsumer;
+        this.handleActionSettleConsumer = props.handleActionSettleConsumer;
         this.leaderboardConsumer = props.leaderboardConsumer;
         this.rebetConsumer = props.rebetConsumer;
         this.langliveUserSettingConsumer = props.langliveUserSettingConsumer;
@@ -16,11 +19,29 @@ export default class SocketRouter extends Core.Routers.BaseSocketRouter {
 
     init(socketClient: any) {
         super.init(socketClient);
-        this.socketClient.on("spin", this.handleActionSettle.bind(this));
         this.socketClient.on("settle", this.handleActionSettle.bind(this));
         this.socketClient.on("getLeaderboard", this.handleGetLeaderboard.bind(this));
         this.socketClient.on("rebet", this.handleRebet.bind(this));
         this.socketClient.on("updateLeaderboardSettings", this.handleUpdateLeaderboardSettings.bind(this));
+    }
+
+    async handleGetHistory(payload: any) {
+        try {
+            if (!this.verify()) {
+                return;
+            }
+
+            const history = await this.historyQuery.queryHistoryByDate(
+                this.gameData.realPlayers[this.socketClient.id],
+                payload.page,
+                this.definition.historyPageSize,
+                payload.date
+            );
+
+            this.socketClient.emit(this.definition.name, history);
+        } catch (error) {
+            this.logService.logError(error);
+        }
     }
 
     handleActionSettle() {
@@ -28,7 +49,7 @@ export default class SocketRouter extends Core.Routers.BaseSocketRouter {
             if (!this.verify()) {
                 return;
             }
-            this.actionSettleConsumer.consume(this.gameData.realPlayers[this.socketClient.id]);
+            this.handleActionSettleConsumer.consume(this.gameData.realPlayers[this.socketClient.id]);
         } catch (error) {
             this.logService.logError(error);
         }

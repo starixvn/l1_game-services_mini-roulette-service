@@ -1,26 +1,32 @@
 import mongoose from "mongoose";
+import { logger } from "sc-common";
 import { SettleGameRoundConsumer } from "sc-game-base/src/core/event-consumers";
 import RouletteRoundResultConsumer from "./roulette-round-result-consumer";
-import { GuaranteedStatus, RouletteBet, SettlementResult } from "../types";
+import { GuaranteedStatus, RouletteBet, RouletteRound, SettlementResult } from "../types";
 import { RouletteGameData } from "../roulette-game-data";
 import RouletteGuaranteedFeatureConsumer from "./roulette-guaranteed-feature-consumer";
 import Constants from "../constants";
+
 export default class RouletteSettleGameRoundConsumer extends SettleGameRoundConsumer {
     declare gameData: RouletteGameData;
+    declare betsRepository: mongoose.Model<RouletteBet>;
+    declare roundsRepository: mongoose.Model<RouletteRound>;
     declare roundResultConsumer: RouletteRoundResultConsumer;
     declare guaranteedFeatureConsumer: RouletteGuaranteedFeatureConsumer;
+    declare logService: typeof logger;
 
     constructor(props: any) {
         super(props);
         this.roundResultConsumer = props.roundResultConsumer;
         this.guaranteedFeatureConsumer = props.guaranteedFeatureConsumer;
+        this.logService = props.logService;
     }
 
     async settleUnsettledBets() {
         const bets = await this.betsRepository.find({ paid: false }).exec();
         if (bets.length > 0) {
             await Promise.all(
-                bets.map(async (bet: mongoose.Document<RouletteBet> & RouletteBet) => {
+                bets.map(async (bet) => {
                     await this.settleBet(bet);
                 })
             );
@@ -28,18 +34,23 @@ export default class RouletteSettleGameRoundConsumer extends SettleGameRoundCons
     }
 
     async settleRoundById(roundId: number) {
-        const bet = await this.betsRepository.findOne({ roundId, paid: false }).exec();
-        bet && (await this.settleBet(bet));
+        const bet = await this.betsRepository.findOne({ roundId }).exec();
+        if (bet) {
+            bet.paid !== true && (await this.settleBet(bet));
+            this.resetPlayerData(bet.name);
+        } else {
+            this.logService.logError(`No bet found for roundId: ${roundId}`);
+        }
     }
 
     async settleBet(bet: mongoose.Document<RouletteBet> & RouletteBet) {
         const guaranteedFeature = await this.guaranteedFeatureConsumer.calculateGuaranteedFeatureStatus(bet);
         const round = await this.findOrCreateRound(bet, guaranteedFeature);
         if (!round) {
+            this.logService.logError(`Cannot create round for roundId: ${bet.roundId}`);
             return;
         }
         const { id, time, result, settlementResult } = round;
-        this.userBetResultPublisher.publishToUser(bet.uid, { finish: { result, settlementResult, roundId: id } });
 
         const odds = bet.odds || this.gameData.gameConfigs.odds;
         const betResult = this.calculateBetResult(settlementResult, bet, odds);
@@ -48,7 +59,7 @@ export default class RouletteSettleGameRoundConsumer extends SettleGameRoundCons
         bet.guaranteedWinStatus = guaranteedFeature?.guaranteedWinStatus;
         bet.guaranteedLossStatus = guaranteedFeature?.guaranteedLossStatus;
 
-        const metaData = this.createMetadata({bet, settlementResult, result});
+        const metaData = this.createMetadata({ bet, settlementResult, result });
 
         bet.settlementDetails = metaData.BetDetails?.map((detail) => ({
             choiceId: detail.ChoiceId,
@@ -61,8 +72,8 @@ export default class RouletteSettleGameRoundConsumer extends SettleGameRoundCons
         await this.callEndGame(bet, id, time, betResult, metaData);
 
         this.captureBetHistory(bet.uid, betResult, bet.time, guaranteedFeature);
+        this.userBetResultPublisher.publishToUser(bet.uid, { finish: { result, settlementResult, roundId: id } });
         this.userBetResultPublisher.publish(bet.uid, betResult);
-        this.resetPlayerData(bet.name);
     }
 
     async findOrCreateRound(bet: RouletteBet, status: GuaranteedStatus | null) {
@@ -90,7 +101,7 @@ export default class RouletteSettleGameRoundConsumer extends SettleGameRoundCons
         }
     }
 
-    createMetadata({bet, settlementResult, result}: {bet: RouletteBet, settlementResult: SettlementResult, result: any}) {
+    createMetadata({ bet, settlementResult, result }: { bet: RouletteBet; settlementResult: SettlementResult; result: any }) {
         const odds = bet.odds || this.gameData.gameConfigs.odds;
         const betDetails: Array<{ ChoiceId: number; ValidBetAmount: number; TotalAmount: number; TotalWin: number }> = [];
         const betTypes = Object.values(Constants.betTypes);

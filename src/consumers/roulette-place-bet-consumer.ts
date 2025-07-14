@@ -7,6 +7,24 @@ import Constants from "../constants";
 export default class RoulettePlaceBetConsumer extends PlaceBetConsumer {
     declare definition: RouletteGameDefinition;
 
+    composeValidationCriteria(player: any, betChoices: any, amount: number, freeBet: boolean, roundId: number) {
+        return this.composeRoundValidationCriteria(player).concat(
+            super.composeValidationCriteria(player, betChoices, amount, freeBet, roundId)
+        );
+    }
+
+    composeRoundValidationCriteria(player: any) {
+        const { betQueue, settleProcessing } = this.gameData.ingame[player.profile.name] || { betQueue: [], settleProcessing: false };
+
+        return [
+            {
+                failure:
+                    settleProcessing || betQueue.some((queue: any) => queue.payload && queue.payload.action === Constants.actions.settle),
+                notice: this.getNoticeObj(helpers.noticeHelper.cannotPlaceBet),
+            },
+        ];
+    }
+
     composeBettingTimeValidationCriteria(_: number) {
         const configs = this.gameData.gameConfigs;
         return [
@@ -120,6 +138,8 @@ export default class RoulettePlaceBetConsumer extends PlaceBetConsumer {
                 currency: player.session.currencyName,
                 system: player.session.system,
                 betTracks: {},
+                betProcessing: false,
+                settleProcessing: false,
                 betQueue: [],
                 roundId: 0,
                 betStartTime: new Date(),

@@ -7,7 +7,7 @@ jest.mock("sc-game-base/src/core/event-consumers", () => {
     };
 });
 
-import RouletteSettleGameRoundConsumer from "../../src/consumers/roulette-settle-game-round-consumer";
+import RouletteSettleGameRoundConsumer from "../../../src/consumers/roulette-settle-game-round-consumer";
 
 describe("RouletteSettleGameRoundConsumer.settleBet", () => {
     let consumer: RouletteSettleGameRoundConsumer;
@@ -16,6 +16,7 @@ describe("RouletteSettleGameRoundConsumer.settleBet", () => {
     let mockRound: any;
     let mockGameData: any;
     let mockUserBetResultPublisher: any;
+    let mockLogService: any;
 
     beforeEach(() => {
         mockGuaranteedFeatureConsumer = {
@@ -37,10 +38,14 @@ describe("RouletteSettleGameRoundConsumer.settleBet", () => {
             publishToUser: jest.fn(),
             publish: jest.fn(),
         };
+        mockLogService = {
+            logError: jest.fn(),
+        };
 
         consumer = new RouletteSettleGameRoundConsumer({
             roundResultConsumer: {},
             guaranteedFeatureConsumer: mockGuaranteedFeatureConsumer,
+            logService: mockLogService,
         });
         consumer.gameData = mockGameData;
         consumer.userBetResultPublisher = mockUserBetResultPublisher;
@@ -167,21 +172,6 @@ describe("RouletteSettleGameRoundConsumer.settleBet", () => {
         expect(mockUserBetResultPublisher.publishToUser).toHaveBeenCalled();
     });
 
-    it("should call publish and resetPlayerData", async () => {
-        // Arrange
-        mockGuaranteedFeatureConsumer.calculateGuaranteedFeatureStatus.mockResolvedValue({
-            guaranteedWinStatus: "active",
-            guaranteedLossStatus: "inactive",
-        });
-
-        // Act
-        await consumer.settleBet(mockBet);
-
-        // Assert
-        expect(mockUserBetResultPublisher.publish).toHaveBeenCalled();
-        expect(consumer.resetPlayerData).toHaveBeenCalledWith("player1");
-    });
-
     it("should return early and not call save or callEndGame if round is not found", async () => {
         // Arrange
         consumer.findOrCreateRound = jest.fn().mockResolvedValue(null);
@@ -192,6 +182,7 @@ describe("RouletteSettleGameRoundConsumer.settleBet", () => {
         // Assert
         expect(mockBet.save).not.toHaveBeenCalled();
         expect(consumer.callEndGame).not.toHaveBeenCalled();
+        expect(mockLogService.logError).toHaveBeenCalled();
     });
 
     it("should map metaData.BetDetails to bet.settlementDetails correctly", async () => {

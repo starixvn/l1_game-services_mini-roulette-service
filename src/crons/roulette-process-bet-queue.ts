@@ -45,6 +45,11 @@ export default class RouletteProcessBetQueue extends Crons.ProcessBetQueue {
         this.gameData.ingame[player.profile.name].settleProcessing = true;
         const roundId = this.gameData.ingame[player.profile.name].roundId;
         await this.settleGameRoundConsumer.settleRoundById(roundId);
+        this.resetPlayerData(player.profile.name);
+    }
+
+    resetPlayerData(playerName: string) {
+        delete this.gameData.ingame[playerName];
     }
 
     async composeValidationCriteria(player: any, payload: any) {

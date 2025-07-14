@@ -37,7 +37,6 @@ export default class RouletteSettleGameRoundConsumer extends SettleGameRoundCons
         const bet = await this.betsRepository.findOne({ roundId }).exec();
         if (bet) {
             bet.paid !== true && (await this.settleBet(bet));
-            this.resetPlayerData(bet.name);
         } else {
             this.logService.logError(`No bet found for roundId: ${roundId}`);
         }
@@ -130,10 +129,6 @@ export default class RouletteSettleGameRoundConsumer extends SettleGameRoundCons
             BetDetails: betDetails,
             Result: result.toString(),
         };
-    }
-
-    resetPlayerData(playerName: string) {
-        delete this.gameData.ingame[playerName];
     }
 
     captureBetHistory(

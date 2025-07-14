@@ -54,7 +54,7 @@ export default class LangliveUserSettingConsumer {
             hideName: number;
         };
     }> {
-        const projection = { _id: 0, uid: 0, gameId: 0 };
+        const projection = { _id: 0, uid: 0, gameId: 0, __v: 0 };
         const userSetting = await LangliveUserSettingsModel.findOne({ uid, gameId: this.definition.id }, projection).lean().exec();
 
         if (userSetting != null) {

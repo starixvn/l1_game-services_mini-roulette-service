@@ -74,21 +74,22 @@ export const trackBetChoices = (
     rate: number,
     reduce = false
 ) => {
-    Object.entries(betChoices).forEach(([typeOfBets, choicesPerType]) => {
-        const trackChoicesPerType = tracks[typeOfBets] || {};
+    betChoices &&
+        Object.entries(betChoices).forEach(([typeOfBets, choicesPerType]) => {
+            const trackChoicesPerType = tracks[typeOfBets] || {};
 
-        Object.entries(choicesPerType).forEach(([betChoice, amount]) => {
-            trackChoicesPerType[betChoice] = reduce
-                ? trackChoicesPerType[betChoice] - amount * rate
-                : (trackChoicesPerType[betChoice] || 0) + amount * rate;
+            Object.entries(choicesPerType).forEach(([betChoice, amount]) => {
+                trackChoicesPerType[betChoice] = reduce
+                    ? trackChoicesPerType[betChoice] - amount * rate
+                    : (trackChoicesPerType[betChoice] || 0) + amount * rate;
 
-            if (trackChoicesPerType[betChoice] === 0) {
-                delete trackChoicesPerType[betChoice];
+                if (trackChoicesPerType[betChoice] === 0) {
+                    delete trackChoicesPerType[betChoice];
+                }
+            });
+
+            if (!tracks[typeOfBets]) {
+                tracks[typeOfBets] = trackChoicesPerType;
             }
         });
-
-        if (!tracks[typeOfBets]) {
-            tracks[typeOfBets] = trackChoicesPerType;
-        }
-    });
 };

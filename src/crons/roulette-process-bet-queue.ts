@@ -39,7 +39,7 @@ export default class RouletteProcessBetQueue extends Crons.ProcessBetQueue {
     }
 
     private async proceedActionSettle(player: any, payload: any) {
-        if (!(await this.validateBetRequest(player, payload))) {
+        if (!(await this.validateSettleRequest(player))) {
             return;
         }
         this.gameData.ingame[player.profile.name].settleProcessing = true;
@@ -53,18 +53,6 @@ export default class RouletteProcessBetQueue extends Crons.ProcessBetQueue {
     }
 
     async composeValidationCriteria(player: any, payload: any) {
-        const { action } = payload;
-        switch (action) {
-            case Constants.actions.bet:
-                return this.composeBetValidationCriteria(player);
-            case Constants.actions.settle:
-                return this.composeSettleValidationCriteria(player);
-            default:
-                return [];
-        }
-    }
-
-    composeBetValidationCriteria(player: any) {
         const playerData = this.gameData.ingame?.[player.profile.name];
         return [
             {
@@ -72,6 +60,16 @@ export default class RouletteProcessBetQueue extends Crons.ProcessBetQueue {
                 notice: { errorCode: helpers.noticeHelper.cannotPlaceBet },
             },
         ];
+    }
+
+    async validateSettleRequest(player: any) {
+        const criteria = this.composeSettleValidationCriteria(player);
+        const failedCriterion = criteria.find((criterion) => criterion.failure);
+        if (failedCriterion) {
+            this.placeBetPublisher.publishGameFailedBet(player.UID, { endBet: -1, notice: failedCriterion.notice });
+            return false;
+        }
+        return true;
     }
 
     composeSettleValidationCriteria(player: any) {
@@ -82,10 +80,13 @@ export default class RouletteProcessBetQueue extends Crons.ProcessBetQueue {
             roundId: 0,
             settleProcessing: false,
         };
+        const total = Object.values(betTracks as Record<string, Record<string, number>>).reduce((acc, curr) => {
+            return Object.values(curr).reduce((acc, curr) => acc + curr, acc);
+        }, 0);
         const criteria = [
             { failure: !playerData, errorCode: helpers.noticeHelper.invalidBet },
             { failure: betQueue.length > 0, errorCode: notices.processingAction },
-            { failure: Object.keys(betTracks).length === 0, errorCode: helpers.noticeHelper.invalidBet },
+            { failure: total === 0, errorCode: helpers.noticeHelper.invalidBet },
             { failure: !roundId || roundId <= 0, errorCode: helpers.noticeHelper.invalidBet },
             { failure: settleProcessing, errorCode: notices.processingAction },
         ];
@@ -187,7 +188,7 @@ export default class RouletteProcessBetQueue extends Crons.ProcessBetQueue {
         if (this.gameData.ingame?.[playerName]) {
             const { betTracks } = this.gameData.ingame[playerName];
 
-            trackBetChoices(betTracks, bet.betChoices, 1, reduce);
+            betTracks && trackBetChoices(betTracks, bet.betChoices, 1, reduce);
         }
     };
 

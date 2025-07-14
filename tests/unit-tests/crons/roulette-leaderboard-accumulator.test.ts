@@ -14,7 +14,9 @@ jest.mock("../../../src/models", () => ({
     },
     RouletteLeaderboardModel: {
         findOne: jest.fn(),
-        findOneAndUpdate: jest.fn(),
+        findOneAndUpdate: jest.fn().mockReturnValue({
+            exec: jest.fn(),
+        }),
     },
 }));
 
@@ -121,11 +123,15 @@ describe("RouletteLeaderboardAccumulator", () => {
 
         beforeEach(() => {
             (RouletteLeaderboardModel.findOne as jest.Mock).mockReturnValue({
-                lean: jest.fn(),
+                lean: jest.fn().mockReturnValue({
+                    exec: jest.fn(),
+                }),
             });
 
             (RouletteBets.find as jest.Mock).mockReturnValue({
-                lean: jest.fn(),
+                lean: jest.fn().mockReturnValue({
+                    exec: jest.fn(),
+                }),
             });
         });
 
@@ -134,10 +140,14 @@ describe("RouletteLeaderboardAccumulator", () => {
                 lastProcessedTime: startOfDay,
             };
             (RouletteLeaderboardModel.findOne as jest.Mock).mockReturnValue({
-                lean: jest.fn().mockResolvedValue(mockCache),
+                lean: jest.fn().mockReturnValue({
+                    exec: jest.fn().mockResolvedValue(mockCache),
+                }),
             });
             (RouletteBets.find as jest.Mock).mockReturnValue({
-                lean: jest.fn().mockResolvedValue([]),
+                lean: jest.fn().mockReturnValue({
+                    exec: jest.fn().mockResolvedValue([]),
+                }),
             });
 
             await accumulator.accumulateIncremental(testDate);
@@ -151,14 +161,18 @@ describe("RouletteLeaderboardAccumulator", () => {
 
         it("should create new leaderboard when no cache exists", async () => {
             (RouletteLeaderboardModel.findOne as jest.Mock).mockReturnValue({
-                lean: jest.fn().mockResolvedValue(null),
+                lean: jest.fn().mockReturnValue({
+                    exec: jest.fn().mockResolvedValue(null),
+                }),
             });
             const mockBets = [
                 { uid: "user1", betwin: 100, time: new Date("2024-01-15T12:00:00Z") },
                 { uid: "user2", betwin: 50, time: new Date("2024-01-15T13:00:00Z") },
             ];
             (RouletteBets.find as jest.Mock).mockReturnValue({
-                lean: jest.fn().mockResolvedValue(mockBets),
+                lean: jest.fn().mockReturnValue({
+                    exec: jest.fn().mockResolvedValue(mockBets),
+                }),
             });
 
             await accumulator.accumulateIncremental(testDate);
@@ -173,7 +187,7 @@ describe("RouletteLeaderboardAccumulator", () => {
                     updatedAt: expect.any(Date),
                     lastProcessedTime: expect.any(Date),
                 },
-                { upsert: true }
+                { upsert: true, new: true }
             );
         });
 
@@ -186,14 +200,18 @@ describe("RouletteLeaderboardAccumulator", () => {
                 ],
             };
             (RouletteLeaderboardModel.findOne as jest.Mock).mockReturnValue({
-                lean: jest.fn().mockResolvedValue(mockCache),
+                lean: jest.fn().mockReturnValue({
+                    exec: jest.fn().mockResolvedValue(mockCache),
+                }),
             });
             const mockBets = [
                 { uid: "user1", betwin: 50, time: new Date("2024-01-15T12:00:00Z") },
                 { uid: "user3", betwin: 150, time: new Date("2024-01-15T13:00:00Z") },
             ];
             (RouletteBets.find as jest.Mock).mockReturnValue({
-                lean: jest.fn().mockResolvedValue(mockBets),
+                lean: jest.fn().mockReturnValue({
+                    exec: jest.fn().mockResolvedValue(mockBets),
+                }),
             });
 
             await accumulator.accumulateIncremental(testDate);
@@ -209,13 +227,15 @@ describe("RouletteLeaderboardAccumulator", () => {
                     updatedAt: expect.any(Date),
                     lastProcessedTime: expect.any(Date),
                 },
-                { upsert: true }
+                { upsert: true, new: true }
             );
         });
 
         it("should handle multiple bets from the same user", async () => {
             (RouletteLeaderboardModel.findOne as jest.Mock).mockReturnValue({
-                lean: jest.fn().mockResolvedValue(null),
+                lean: jest.fn().mockReturnValue({
+                    exec: jest.fn().mockResolvedValue(null),
+                }),
             });
             const mockBets = [
                 { uid: "user1", betwin: 100, time: new Date("2024-01-15T12:00:00Z") },
@@ -223,7 +243,9 @@ describe("RouletteLeaderboardAccumulator", () => {
                 { uid: "user1", betwin: 75, time: new Date("2024-01-15T14:00:00Z") },
             ];
             (RouletteBets.find as jest.Mock).mockReturnValue({
-                lean: jest.fn().mockResolvedValue(mockBets),
+                lean: jest.fn().mockReturnValue({
+                    exec: jest.fn().mockResolvedValue(mockBets),
+                }),
             });
 
             await accumulator.accumulateIncremental(testDate);
@@ -235,17 +257,21 @@ describe("RouletteLeaderboardAccumulator", () => {
                     updatedAt: expect.any(Date),
                     lastProcessedTime: expect.any(Date),
                 },
-                { upsert: true }
+                { upsert: true, new: true }
             );
         });
 
         it("should use start of day as lastProcessedTime when no cache exists", async () => {
             (RouletteLeaderboardModel.findOne as jest.Mock).mockReturnValue({
-                lean: jest.fn().mockResolvedValue(null),
+                lean: jest.fn().mockReturnValue({
+                    exec: jest.fn().mockResolvedValue(null),
+                }),
             });
             const mockBets = [{ uid: "user1", betwin: 100, time: new Date("2024-01-15T12:00:00Z") }];
             (RouletteBets.find as jest.Mock).mockReturnValue({
-                lean: jest.fn().mockResolvedValue(mockBets),
+                lean: jest.fn().mockReturnValue({
+                    exec: jest.fn().mockResolvedValue(mockBets),
+                }),
             });
 
             await accumulator.accumulateIncremental(testDate);
@@ -262,11 +288,15 @@ describe("RouletteLeaderboardAccumulator", () => {
                 lastProcessedTime,
             };
             (RouletteLeaderboardModel.findOne as jest.Mock).mockReturnValue({
-                lean: jest.fn().mockResolvedValue(mockCache),
+                lean: jest.fn().mockReturnValue({
+                    exec: jest.fn().mockResolvedValue(mockCache),
+                }),
             });
             const mockBets = [{ uid: "user1", betwin: 100, time: new Date("2024-01-15T12:00:00Z") }];
             (RouletteBets.find as jest.Mock).mockReturnValue({
-                lean: jest.fn().mockResolvedValue(mockBets),
+                lean: jest.fn().mockReturnValue({
+                    exec: jest.fn().mockResolvedValue(mockBets),
+                }),
             });
 
             await accumulator.accumulateIncremental(testDate);
@@ -279,7 +309,9 @@ describe("RouletteLeaderboardAccumulator", () => {
 
         it("should update lastProcessedTime to the newest bet time", async () => {
             (RouletteLeaderboardModel.findOne as jest.Mock).mockReturnValue({
-                lean: jest.fn().mockResolvedValue(null),
+                lean: jest.fn().mockReturnValue({
+                    exec: jest.fn().mockResolvedValue(null),
+                }),
             });
             const mockBets = [
                 { uid: "user1", betwin: 100, time: new Date("2024-01-15T12:00:00Z") },
@@ -287,7 +319,9 @@ describe("RouletteLeaderboardAccumulator", () => {
                 { uid: "user3", betwin: 75, time: new Date("2024-01-15T13:00:00Z") },
             ];
             (RouletteBets.find as jest.Mock).mockReturnValue({
-                lean: jest.fn().mockResolvedValue(mockBets),
+                lean: jest.fn().mockReturnValue({
+                    exec: jest.fn().mockResolvedValue(mockBets),
+                }),
             });
 
             await accumulator.accumulateIncremental(testDate);
@@ -297,13 +331,15 @@ describe("RouletteLeaderboardAccumulator", () => {
                 expect.objectContaining({
                     lastProcessedTime: new Date("2024-01-15T14:00:00Z"),
                 }),
-                { upsert: true }
+                { upsert: true, new: true }
             );
         });
 
         it("should sort leaderboard by totalWin in descending order", async () => {
             (RouletteLeaderboardModel.findOne as jest.Mock).mockReturnValue({
-                lean: jest.fn().mockResolvedValue(null),
+                lean: jest.fn().mockReturnValue({
+                    exec: jest.fn().mockResolvedValue(null),
+                }),
             });
             const mockBets = [
                 { uid: "user1", betwin: 50, time: new Date("2024-01-15T12:00:00Z") },
@@ -311,7 +347,9 @@ describe("RouletteLeaderboardAccumulator", () => {
                 { uid: "user3", betwin: 75, time: new Date("2024-01-15T14:00:00Z") },
             ];
             (RouletteBets.find as jest.Mock).mockReturnValue({
-                lean: jest.fn().mockResolvedValue(mockBets),
+                lean: jest.fn().mockReturnValue({
+                    exec: jest.fn().mockResolvedValue(mockBets),
+                }),
             });
 
             await accumulator.accumulateIncremental(testDate);
@@ -325,13 +363,15 @@ describe("RouletteLeaderboardAccumulator", () => {
                         { uid: "user1", totalWin: 50, rank: 3 },
                     ],
                 }),
-                { upsert: true }
+                { upsert: true, new: true }
             );
         });
 
         it("should handle database errors gracefully", async () => {
             (RouletteLeaderboardModel.findOne as jest.Mock).mockReturnValue({
-                lean: jest.fn().mockRejectedValue(new Error("Database error")),
+                lean: jest.fn().mockReturnValue({
+                    exec: jest.fn().mockRejectedValue(new Error("Database error")),
+                }),
             });
 
             await expect(accumulator.accumulateIncremental(testDate)).rejects.toThrow("Database error");

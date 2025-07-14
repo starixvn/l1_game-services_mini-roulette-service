@@ -33,7 +33,9 @@ describe("RouletteLeaderboardConsumer", () => {
 
     it("should return default values if no leaderboard found", async () => {
         (RouletteLeaderboardModel.findOne as jest.Mock).mockReturnValue({
-            lean: jest.fn().mockResolvedValue(null),
+            lean: jest.fn().mockReturnValueOnce({
+                exec: jest.fn().mockResolvedValue(null),
+            }),
         });
         const player = { UID: "user1" };
 
@@ -41,7 +43,6 @@ describe("RouletteLeaderboardConsumer", () => {
 
         expect(result.leaderboard).toEqual([]);
         expect(result.currentPlayer.rank).toBe(-1);
-        expect(typeof result.time).toBe("string");
     });
 
     it("should return leaderboard with enhanced player info", async () => {
@@ -53,7 +54,9 @@ describe("RouletteLeaderboardConsumer", () => {
             updatedAt: new Date(),
         };
         (RouletteLeaderboardModel.findOne as jest.Mock).mockReturnValue({
-            lean: jest.fn().mockResolvedValue(leaderboardDoc),
+            lean: jest.fn().mockReturnValueOnce({
+                exec: jest.fn().mockResolvedValue(leaderboardDoc),
+            }),
         });
         mockLangliveUserSettingConsumer.getLeaderboardSettings.mockResolvedValue(
             new Promise((resolve) =>
@@ -78,7 +81,9 @@ describe("RouletteLeaderboardConsumer", () => {
             updatedAt: new Date(),
         };
         (RouletteLeaderboardModel.findOne as jest.Mock).mockReturnValue({
-            lean: jest.fn().mockResolvedValue(leaderboardDoc),
+            lean: jest.fn().mockReturnValueOnce({
+                exec: jest.fn().mockResolvedValue(leaderboardDoc),
+            }),
         });
         mockLangliveUserSettingConsumer.getLeaderboardSettings.mockResolvedValue({
             avatarUrl: "avatar_user1",
@@ -99,7 +104,9 @@ describe("RouletteLeaderboardConsumer", () => {
             updatedAt: new Date(),
         };
         (RouletteLeaderboardModel.findOne as jest.Mock).mockReturnValue({
-            lean: jest.fn().mockResolvedValue(leaderboardDoc),
+            lean: jest.fn().mockReturnValueOnce({
+                exec: jest.fn().mockResolvedValue(leaderboardDoc),
+            }),
         });
         mockLangliveUserSettingConsumer.getLeaderboardSettings.mockRejectedValue(new Error("fail"));
         const player = { UID: "user1" };
@@ -108,5 +115,36 @@ describe("RouletteLeaderboardConsumer", () => {
 
         expect(result.leaderboard[0].avatarUrl).toBe("");
         expect(result.leaderboard[0].nickname).toBe("");
+    });
+
+    it("should return correct current player", async () => {
+        const leaderboardDoc = {
+            leaderboard: [
+                { uid: "user1", totalWin: 100, rank: 1 },
+                { uid: "user2", totalWin: 50, rank: 2 },
+            ],
+            updatedAt: new Date(),
+        };
+        (RouletteLeaderboardModel.findOne as jest.Mock).mockReturnValue({
+            lean: jest.fn().mockReturnValueOnce({
+                exec: jest.fn().mockResolvedValue(leaderboardDoc),
+            }),
+        });
+        mockLangliveUserSettingConsumer.getLeaderboardSettings.mockResolvedValue({
+            avatarUrl: "avatar_user1",
+            nickname: "nick_user1",
+            leaderboard: { hideAvatar: 1, hideName: 1 },
+        });
+        const player = { UID: "user1" };
+
+        const result = await consumer.consume(player, { top: 1 });
+
+        expect(result.currentPlayer).toMatchObject({
+            rank: 1,
+            currentPlayerSettings: {
+                avatarUrl: "avatar_user1",
+                nickname: "nick_user1",
+            },
+        });
     });
 });

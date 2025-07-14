@@ -11,6 +11,8 @@ export default class RouletteLeaderboardAccumulator {
 
     langliveUserSettingConsumer: LangliveUserSettingConsumer;
 
+    private isRunning: boolean = false;
+
     constructor({
         definition,
         appConfigs,
@@ -31,7 +33,22 @@ export default class RouletteLeaderboardAccumulator {
     start() {
         const job = new cron.CronJob({
             cronTime: this.appConfigs?.cronTimeGetLeaderboard || "*/5 * * * *",
-            onTick: () => this.accumulateIncremental(new Date()).catch(this.logService.logError),
+            onTick: () => {
+                // Prevent multiple instances from running simultaneously
+                if (this.isRunning) {
+                    this.logService.logError(
+                        `${this.definition.name} leaderboard accumulation is already running, skipping this execution.`
+                    );
+                    return;
+                }
+
+                this.isRunning = true;
+                this.accumulateIncremental(new Date())
+                    .catch(this.logService.logError)
+                    .finally(() => {
+                        this.isRunning = false;
+                    });
+            },
             onComplete: () => {
                 this.logService.logError(
                     `${
@@ -50,33 +67,38 @@ export default class RouletteLeaderboardAccumulator {
         const end = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
         const dateKey = date.toISOString().slice(0, 10);
 
-        let cache = await RouletteLeaderboardModel.findOne({ date: dateKey }).lean();
+        let cache = await RouletteLeaderboardModel.findOne({ date: dateKey }).lean().exec();
         let lastProcessedTime = cache?.lastProcessedTime || start;
 
         const newBets = await RouletteBets.find({
             paid: true,
             time: { $gt: lastProcessedTime, $lte: end },
-        }).lean();
+        })
+            .lean()
+            .exec();
 
         if (!newBets.length) {
-            await RouletteLeaderboardModel.findOneAndUpdate({ date: dateKey }, { updatedAt: new Date() }, { upsert: true });
+            await RouletteLeaderboardModel.findOneAndUpdate({ date: dateKey }, { updatedAt: new Date() }, { upsert: true }).exec();
             return;
         }
 
         const playerMap = new Map();
         for (const bet of newBets) {
             const uid = bet.uid;
+            const betwin = typeof bet.betwin === "number" && !isNaN(bet.betwin) ? bet.betwin : 0;
+
             if (!playerMap.has(uid)) {
                 playerMap.set(uid, { totalWin: 0 });
             }
             const entry = playerMap.get(uid);
-            entry.totalWin += bet.betwin;
+            entry.totalWin += betwin;
         }
 
         let leaderboard = cache?.leaderboard || [];
         const leaderboardMap = new Map();
         for (const entry of leaderboard) {
-            leaderboardMap.set(entry.uid, { ...entry });
+            const totalWin = typeof entry.totalWin === "number" && !isNaN(entry.totalWin) ? entry.totalWin : 0;
+            leaderboardMap.set(entry.uid, { ...entry, totalWin });
         }
 
         for (const [uid, { totalWin }] of playerMap.entries()) {
@@ -93,7 +115,11 @@ export default class RouletteLeaderboardAccumulator {
         }
 
         leaderboard = Array.from(leaderboardMap.values());
-        leaderboard.sort((a, b) => b.totalWin - a.totalWin);
+        leaderboard.sort((a, b) => {
+            const aWin = typeof a.totalWin === "number" && !isNaN(a.totalWin) ? a.totalWin : 0;
+            const bWin = typeof b.totalWin === "number" && !isNaN(b.totalWin) ? b.totalWin : 0;
+            return bWin - aWin;
+        });
         leaderboard.forEach((entry, idx) => (entry.rank = idx + 1));
 
         const newestTime = newBets.reduce((max: Date, bet: any) => (bet.time > max ? bet.time : max), lastProcessedTime);
@@ -105,7 +131,7 @@ export default class RouletteLeaderboardAccumulator {
                 updatedAt: new Date(),
                 lastProcessedTime: newestTime,
             },
-            { upsert: true }
-        );
+            { upsert: true, new: true }
+        ).exec();
     }
 }

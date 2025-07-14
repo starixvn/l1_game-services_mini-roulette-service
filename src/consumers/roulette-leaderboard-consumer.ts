@@ -29,9 +29,9 @@ export default class RouletteLeaderboardConsumer {
 
     async getLeaderboardByDay(date: Date, uid: string, top: number) {
         const key = date.toISOString().split("T")[0];
-        const leaderboard = await RouletteLeaderboardModel.findOne({ date: key }, { _id: 0, __v: 0, "leaderboard._id": 0 }).lean();
+        const leaderboard = await RouletteLeaderboardModel.findOne({ date: key }, { _id: 0, __v: 0, "leaderboard._id": 0 }).lean().exec();
         if (!leaderboard) {
-            return { leaderboard: [], currentPlayer: { rank: -1, currentPlayerSettings: null }, time: date.toISOString() };
+            return { leaderboard: [], currentPlayer: { rank: -1, currentPlayerSettings: null, totalWin: 0 }, time: date.toISOString() };
         }
 
         const slicedLeaderboard = leaderboard.leaderboard.slice(0, top);
@@ -84,6 +84,7 @@ export default class RouletteLeaderboardConsumer {
             currentPlayer: {
                 rank: player?.rank || -1,
                 currentPlayerSettings,
+                totalWin: player?.totalWin || 0,
             },
             time: leaderboard.updatedAt.toISOString(),
         };

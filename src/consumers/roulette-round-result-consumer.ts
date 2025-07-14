@@ -12,7 +12,7 @@ export default class RouletteWinFeatureConsumer {
 
     async generateResult(bet: RouletteBet, status: GuaranteedStatus | null) {
         const resultFromAdmin = this.getResultFromAdmin(bet.name);
-        if (resultFromAdmin) {
+        if (resultFromAdmin !== null) {
             return resultFromAdmin;
         }
         const { randomMode } = this.gameData.gameConfigs;

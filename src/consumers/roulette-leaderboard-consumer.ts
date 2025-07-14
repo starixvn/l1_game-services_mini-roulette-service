@@ -41,7 +41,7 @@ export default class RouletteLeaderboardConsumer {
             slicedLeaderboard.map(async (player) => {
                 const { uid: _uid, ...rest } = player;
                 try {
-                    const userSettings = await this.langliveUserSettingConsumer.getLeaderboardSettings(player.uid);
+                    const userSettings = await this.langliveUserSettingConsumer.getLangliveUserSettings(player.uid);
 
                     const hideAvatar = Boolean(userSettings?.leaderboard?.hideAvatar);
                     const hideName = Boolean(userSettings?.leaderboard?.hideName);
@@ -71,7 +71,7 @@ export default class RouletteLeaderboardConsumer {
 
         if (currentPlayerSettings == null) {
             try {
-                const userSettings = await this.langliveUserSettingConsumer.getLeaderboardSettings(uid);
+                const userSettings = await this.langliveUserSettingConsumer.getLangliveUserSettings(uid);
                 currentPlayerSettings = userSettings;
             } catch (error) {
                 this.logService.logError(`Error getting user settings for current player ${uid}: ${JSON.stringify(error)}`);

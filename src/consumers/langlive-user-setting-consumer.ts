@@ -47,6 +47,17 @@ export default class LangliveUserSettingConsumer {
     }
 
     async getLeaderboardSettings(uid: string): Promise<{
+        hideAvatar: boolean;
+        hideName: boolean;
+    }> {
+        const userSetting = await this.getLangliveUserSettings(uid);
+        return {
+            hideAvatar: userSetting.leaderboard.hideAvatar === 1,
+            hideName: userSetting.leaderboard.hideName === 1,
+        };
+    }
+
+    async getLangliveUserSettings(uid: string): Promise<{
         avatarUrl: string;
         nickname: string;
         leaderboard: {

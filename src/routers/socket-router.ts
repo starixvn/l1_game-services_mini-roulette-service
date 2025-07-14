@@ -105,9 +105,7 @@ export default class SocketRouter extends Core.Routers.BaseSocketRouter {
                 this.gameData.realPlayers[this.socketClient.id].UID
             );
             this.socketClient.emit(this.definition.name, {
-                leaderboardSettings: {
-                    ...leaderboardSettings?.leaderboard,
-                },
+                leaderboardSettings,
             });
         } catch (error) {
             this.logService.logError(error);

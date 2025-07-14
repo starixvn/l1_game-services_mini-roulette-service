@@ -121,14 +121,14 @@ describe("LangliveUserSettingConsumer", () => {
         });
     });
 
-    describe("getLeaderboardSettings", () => {
+    describe("getLangliveUserSettings", () => {
         it("should return userSetting if found", async () => {
             const userSetting = { avatarUrl: "a", nickname: "n", leaderboard: { hideAvatar: 1, hideName: 0 } };
             const exec = jest.fn().mockResolvedValueOnce(userSetting);
             const lean = jest.fn().mockReturnValueOnce({ exec });
             mockFindOne.mockReturnValueOnce({ lean });
 
-            const result = await consumer.getLeaderboardSettings("user3");
+            const result = await consumer.getLangliveUserSettings("user3");
 
             expect(lean).toHaveBeenCalled();
             expect(exec).toHaveBeenCalled();
@@ -150,7 +150,7 @@ describe("LangliveUserSettingConsumer", () => {
             require("../../../src/models").LangliveUserSettingsModel.updateOne = mockUpdateOneWithExec;
             jest.spyOn(consumer, "getDefaultLeaderboardSettings").mockResolvedValueOnce({ hideAvatar: 0, hideName: 0 });
 
-            const result = await consumer.getLeaderboardSettings("user5");
+            const result = await consumer.getLangliveUserSettings("user5");
 
             expect(result).toMatchObject({
                 avatarUrl: "a",

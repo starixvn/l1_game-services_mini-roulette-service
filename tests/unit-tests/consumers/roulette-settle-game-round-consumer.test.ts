@@ -65,7 +65,6 @@ describe("RouletteSettleGameRoundConsumer.settleBet", () => {
         });
         consumer.callEndGame = jest.fn();
         consumer.captureBetHistory = jest.fn();
-        consumer.resetPlayerData = jest.fn();
 
         mockBet = {
             uid: "user1",

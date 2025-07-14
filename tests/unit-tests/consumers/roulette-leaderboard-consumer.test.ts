@@ -18,7 +18,7 @@ describe("RouletteLeaderboardConsumer", () => {
     beforeEach(() => {
         mockGameData = new RouletteGameData(60);
         mockLangliveUserSettingConsumer = {
-            getLeaderboardSettings: jest.fn(),
+            getLangliveUserSettings: jest.fn(),
         };
         logService = {
             logError: jest.fn(),
@@ -58,7 +58,7 @@ describe("RouletteLeaderboardConsumer", () => {
                 exec: jest.fn().mockResolvedValue(leaderboardDoc),
             }),
         });
-        mockLangliveUserSettingConsumer.getLeaderboardSettings.mockResolvedValue(
+        mockLangliveUserSettingConsumer.getLangliveUserSettings.mockResolvedValue(
             new Promise((resolve) =>
                 resolve({
                     avatarUrl: `avatar_user1`,
@@ -85,7 +85,7 @@ describe("RouletteLeaderboardConsumer", () => {
                 exec: jest.fn().mockResolvedValue(leaderboardDoc),
             }),
         });
-        mockLangliveUserSettingConsumer.getLeaderboardSettings.mockResolvedValue({
+        mockLangliveUserSettingConsumer.getLangliveUserSettings.mockResolvedValue({
             avatarUrl: "avatar_user1",
             nickname: "nick_user1",
             leaderboard: { hideAvatar: 1, hideName: 1 },
@@ -98,7 +98,7 @@ describe("RouletteLeaderboardConsumer", () => {
         expect(result.leaderboard[0].nickname).toBeNull();
     });
 
-    it("should handle error in getLeaderboardSettings gracefully", async () => {
+    it("should handle error in getLangliveUserSettings gracefully", async () => {
         const leaderboardDoc = {
             leaderboard: [{ uid: "user1", totalWin: 100, rank: 1 }],
             updatedAt: new Date(),
@@ -108,7 +108,7 @@ describe("RouletteLeaderboardConsumer", () => {
                 exec: jest.fn().mockResolvedValue(leaderboardDoc),
             }),
         });
-        mockLangliveUserSettingConsumer.getLeaderboardSettings.mockRejectedValue(new Error("fail"));
+        mockLangliveUserSettingConsumer.getLangliveUserSettings.mockRejectedValue(new Error("fail"));
         const player = { UID: "user1" };
 
         const result = await consumer.consume(player, { top: 1 });
@@ -130,7 +130,7 @@ describe("RouletteLeaderboardConsumer", () => {
                 exec: jest.fn().mockResolvedValue(leaderboardDoc),
             }),
         });
-        mockLangliveUserSettingConsumer.getLeaderboardSettings.mockResolvedValue({
+        mockLangliveUserSettingConsumer.getLangliveUserSettings.mockResolvedValue({
             avatarUrl: "avatar_user1",
             nickname: "nick_user1",
             leaderboard: { hideAvatar: 1, hideName: 1 },

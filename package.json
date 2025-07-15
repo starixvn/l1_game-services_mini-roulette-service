@@ -5,7 +5,7 @@
     "main": "./build/app.js",
     "scripts": {
         "build": "tsc -p tsconfig.build.json",
-        "test": "jest --testPathPattern=tests/unit-tests/ ",
+        "test": "jest",
         "test-coverage": "jest --collect-coverage --testPathPattern=tests/unit-tests/",
         "integration-test": "npm run build && jest --config ./jest.integration-test.config.cjs --testPathPattern=tests/integration-tests/ --detectOpenHandles --forceExit",
         "dev": "tsx watch ./src/app.ts",
@@ -45,7 +45,7 @@
         "@types/d3-array": "^3.2.1",
         "@types/jest": "^29.5.12",
         "@types/lodash": "^4.17.16",
-        "@types/sc-common": "^1.0.0",
+        "@types/sc-common": "1.0.1-beta.0",
         "@types/sc-game-base": "1.0.0-beta.11",
         "@types/sc-game-service-integration-utils": "1.0.0",
         "@types/socket.io": "^3.0.2",

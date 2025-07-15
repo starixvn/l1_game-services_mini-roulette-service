@@ -24,7 +24,7 @@ export default class RouletteOutGameConsumer extends Core.BaseEventConsumers.Use
             if (playerData) {
                 const { roundId, betTracks, betQueue } = playerData;
                 if (roundId > 0 && Object.keys(betTracks).length > 0 && betQueue?.length === 0) {
-                    await this.settleGameRoundConsumer.settleRoundById(roundId);
+                    await this.settleGameRoundConsumer.settleRoundById(roundId, player.profile.name);
                 }
             }
             super.consume(socketClient);

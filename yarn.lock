@@ -2291,10 +2291,10 @@
   resolved "https://npm.lumigame.com/@types/range-parser/-/range-parser-1.2.7.tgz"
   integrity sha512-hKormJbkJqzQGhziax5PItDUTMAM9uE2XXQmM37dyd4hVM+5aVl7oVxMVUiVQn2oCQFN/LKCZdvSM0pFRqbSmQ==
 
-"@types/sc-common@^1.0.0":
-  version "1.0.0"
-  resolved "https://npm.lumigame.com/@types/sc-common/-/sc-common-1.0.0.tgz"
-  integrity sha512-gD03QcJr+AnDv4rPd76TNl14RP3bUA1s6qLaQcSM5tSLHmwPD8oFyxxGaRhUsbWf0YrQVdogj8aCWq1tqRd8fw==
+"@types/sc-common@1.0.1-beta.0":
+  version "1.0.1-beta.0"
+  resolved "https://npm.lumigame.com/@types/sc-common/-/sc-common-1.0.1-beta.0.tgz#73830a1791ec4cb3becd10b05a175dbac1a34000"
+  integrity sha512-Mtq/ddGhJkPPTl1Y79sChcd+sVMTTDh6u5JoN5AAE5W6UcqhR9RFdzLGZcn8j1s+YQWCFdn4mhrqSbHRVWovcw==
 
 "@types/sc-game-base@1.0.0-beta.11":
   version "1.0.0-beta.11"

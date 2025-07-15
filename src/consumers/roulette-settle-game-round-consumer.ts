@@ -33,13 +33,14 @@ export default class RouletteSettleGameRoundConsumer extends SettleGameRoundCons
         }
     }
 
-    async settleRoundById(roundId: number) {
+    async settleRoundById(roundId: number, playerName: string) {
         const bet = await this.betsRepository.findOne({ roundId }).exec();
         if (bet) {
             bet.paid !== true && (await this.settleBet(bet));
         } else {
             this.logService.logError(`No bet found for roundId: ${roundId}`);
         }
+        delete this.gameData.ingame[playerName];
     }
 
     async settleBet(bet: mongoose.Document<RouletteBet> & RouletteBet) {
@@ -71,7 +72,7 @@ export default class RouletteSettleGameRoundConsumer extends SettleGameRoundCons
         await bet.save();
         await this.callEndGame(bet, id, time, betResult, metaData);
 
-        this.captureBetHistory(bet.uid, betResult, bet.time, guaranteedFeature);
+        this.captureBetHistory(bet.uid, id, betResult, bet.time, guaranteedFeature);
         this.userBetResultPublisher.publishToUser(bet.uid, { finish: { result, settlementResult, roundId: id } });
         this.userBetResultPublisher.publish(bet.uid, betResult);
     }
@@ -134,6 +135,7 @@ export default class RouletteSettleGameRoundConsumer extends SettleGameRoundCons
 
     captureBetHistory(
         uid: string,
+        roundId: number,
         betResult: { totalBetAmount: number; totalWin: number },
         time: Date,
         guaranteedFeature: GuaranteedStatus | null
@@ -153,6 +155,7 @@ export default class RouletteSettleGameRoundConsumer extends SettleGameRoundCons
             time,
             guaranteedWinStatus: guaranteedFeature?.guaranteedWinStatus ?? Constants.guaranteedStatus.exited,
             guaranteedLossStatus: guaranteedFeature?.guaranteedLossStatus ?? Constants.guaranteedStatus.exited,
+            roundId,
         });
         this.gameData.playerBetHistory[uid] = newBetHistory;
     }

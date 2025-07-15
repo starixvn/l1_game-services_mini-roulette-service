@@ -7,6 +7,7 @@ type PlayerBetHistory = {
     time: Date;
     guaranteedWinStatus: string;
     guaranteedLossStatus: string;
+    roundId: number;
 };
 
 export class RouletteGameData extends Table.TableGameData {

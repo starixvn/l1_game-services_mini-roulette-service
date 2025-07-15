@@ -1,10 +1,11 @@
-import { RouletteBets } from "../models";
+import mongoose from "mongoose";
 import { getStartDate } from "../helpers/day-helper";
+import { RouletteBet } from "../types";
 
 export default class RouletteBetQuery {
-    declare betsRepository: typeof RouletteBets;
+    declare betsRepository: mongoose.Model<RouletteBet>;
 
-    constructor(betsRepository: typeof RouletteBets) {
+    constructor(betsRepository: mongoose.Model<RouletteBet>) {
         this.betsRepository = betsRepository;
     }
 
@@ -34,6 +35,7 @@ export default class RouletteBetQuery {
                                 time: "$time",
                                 guaranteedWinStatus: "$guaranteedWinStatus",
                                 guaranteedLossStatus: "$guaranteedLossStatus",
+                                roundId: "$roundId",
                             },
                         },
                     },

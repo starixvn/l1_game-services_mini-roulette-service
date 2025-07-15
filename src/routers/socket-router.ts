@@ -33,7 +33,7 @@ export default class SocketRouter extends Core.Routers.BaseSocketRouter {
             }
 
             const history = await this.historyQuery.queryHistoryByDate(
-                this.gameData.realPlayers[this.socketClient.id],
+                this.gameData.realPlayers?.[this.socketClient.id],
                 payload.page,
                 this.definition.historyPageSize,
                 payload.date

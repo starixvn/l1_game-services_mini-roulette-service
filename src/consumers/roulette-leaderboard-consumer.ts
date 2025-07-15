@@ -91,8 +91,8 @@ export default class RouletteLeaderboardConsumer {
 
     formatUserSettings(userSettings: {
         leaderboard: {
-            hideAvatar: number;
-            hideName: number;
+            hideAvatar: boolean;
+            hideName: boolean;
         };
         avatarUrl: string;
         nickname: string;

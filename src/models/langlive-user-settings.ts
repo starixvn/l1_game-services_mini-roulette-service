@@ -5,8 +5,8 @@ interface ILangliveUserSettings extends Document {
     avatarUrl: string;
     nickname: string;
     leaderboard: {
-        hideAvatar: number;
-        hideName: number;
+        hideAvatar: boolean;
+        hideName: boolean;
     };
     updatedAt: Date;
     gameId: number;
@@ -16,7 +16,7 @@ const LangliveUserSettingsSchema = new mongoose.Schema<ILangliveUserSettings>({
     uid: { type: String, required: true },
     avatarUrl: { type: String, required: true },
     nickname: { type: String, required: true },
-    leaderboard: { type: Object, required: true, _id: false, default: { hideAvatar: 0, hideName: 0 } },
+    leaderboard: { type: Object, required: true, _id: false, default: { hideAvatar: false, hideName: false } },
     gameId: { type: Number, required: true },
     updatedAt: { type: Date, default: Date.now },
 });

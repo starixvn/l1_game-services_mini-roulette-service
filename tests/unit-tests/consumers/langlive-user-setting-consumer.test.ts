@@ -58,7 +58,7 @@ describe("LangliveUserSettingConsumer", () => {
 
             expect(mockFindOneAndUpdate).toHaveBeenCalledWith(
                 { uid: "user1", gameId: definition.id },
-                { $set: { leaderboard: { hideAvatar: 1, hideName: 0 } } },
+                { $set: { leaderboard: { hideAvatar: true, hideName: false } } },
                 { upsert: true }
             );
         });
@@ -74,7 +74,7 @@ describe("LangliveUserSettingConsumer", () => {
 
             const result = await consumer.getDefaultLeaderboardSettings("user1");
 
-            expect(result).toEqual({ hideAvatar: 1, hideName: 1 });
+            expect(result).toEqual({ hideAvatar: true, hideName: true });
         });
 
         it("should return default if no other game settings exist", async () => {
@@ -84,7 +84,7 @@ describe("LangliveUserSettingConsumer", () => {
 
             const result = await consumer.getDefaultLeaderboardSettings("user2");
 
-            expect(result).toEqual({ hideAvatar: 0, hideName: 0 });
+            expect(result).toEqual({ hideAvatar: false, hideName: false });
         });
     });
 
@@ -111,7 +111,7 @@ describe("LangliveUserSettingConsumer", () => {
             const mockUpdateOneWithExec = jest.fn().mockReturnValue({ exec: mockExec });
             const originalUpdateOne = require("../../../src/models").LangliveUserSettingsModel.updateOne;
             require("../../../src/models").LangliveUserSettingsModel.updateOne = mockUpdateOneWithExec;
-            jest.spyOn(consumer, "getDefaultLeaderboardSettings").mockResolvedValueOnce({ hideAvatar: 0, hideName: 0 });
+            jest.spyOn(consumer, "getDefaultLeaderboardSettings").mockResolvedValueOnce({ hideAvatar: false, hideName: false });
 
             await consumer.updateImageAndNickname("user2", { avatarUrl: "url", nickname: "nick" });
 
@@ -148,14 +148,14 @@ describe("LangliveUserSettingConsumer", () => {
             const mockUpdateOneWithExec = jest.fn().mockReturnValue({ exec: mockExec });
             const originalUpdateOne = require("../../../src/models").LangliveUserSettingsModel.updateOne;
             require("../../../src/models").LangliveUserSettingsModel.updateOne = mockUpdateOneWithExec;
-            jest.spyOn(consumer, "getDefaultLeaderboardSettings").mockResolvedValueOnce({ hideAvatar: 0, hideName: 0 });
+            jest.spyOn(consumer, "getDefaultLeaderboardSettings").mockResolvedValueOnce({ hideAvatar: false, hideName: false });
 
             const result = await consumer.getLangliveUserSettings("user5");
 
             expect(result).toMatchObject({
                 avatarUrl: "a",
                 nickname: "n",
-                leaderboard: { hideAvatar: 0, hideName: 0 },
+                leaderboard: { hideAvatar: false, hideName: false },
             });
             expect(mockUpdateOneWithExec).toHaveBeenCalled();
 

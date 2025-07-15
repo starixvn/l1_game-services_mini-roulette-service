@@ -25,7 +25,7 @@ export default class LangliveUserSettingConsumer {
     async updateLeaderboardSettings(uid: string, payload: { hideAvatar: boolean; hideName: boolean }) {
         await LangliveUserSettingsModel.findOneAndUpdate(
             { uid, gameId: this.definition.id },
-            { $set: { leaderboard: { hideAvatar: payload.hideAvatar ? 1 : 0, hideName: payload.hideName ? 1 : 0 } } },
+            { $set: { leaderboard: { hideAvatar: payload.hideAvatar, hideName: payload.hideName } } },
             { upsert: true }
         ).exec();
     }
@@ -52,8 +52,8 @@ export default class LangliveUserSettingConsumer {
     }> {
         const userSetting = await this.getLangliveUserSettings(uid);
         return {
-            hideAvatar: userSetting.leaderboard.hideAvatar === 1,
-            hideName: userSetting.leaderboard.hideName === 1,
+            hideAvatar: Boolean(userSetting.leaderboard.hideAvatar),
+            hideName: Boolean(userSetting.leaderboard.hideName),
         };
     }
 
@@ -61,8 +61,8 @@ export default class LangliveUserSettingConsumer {
         avatarUrl: string;
         nickname: string;
         leaderboard: {
-            hideAvatar: number;
-            hideName: number;
+            hideAvatar: boolean;
+            hideName: boolean;
         };
     }> {
         const projection = { _id: 0, uid: 0, gameId: 0, __v: 0 };
@@ -90,7 +90,7 @@ export default class LangliveUserSettingConsumer {
             return {
                 avatarUrl: "",
                 nickname: "",
-                leaderboard: { hideAvatar: 0, hideName: 0 },
+                leaderboard: { hideAvatar: false, hideName: false },
             };
         }
     }
@@ -114,18 +114,18 @@ export default class LangliveUserSettingConsumer {
             .lean()
             .exec();
 
-        let combinedSettings = { hideAvatar: 0, hideName: 0 };
+        let combinedSettings = { hideAvatar: false, hideName: false };
 
         if (otherGameSettings.length > 0) {
             combinedSettings = otherGameSettings.reduce(
                 (acc, setting) => {
                     if (setting.leaderboard) {
-                        acc.hideAvatar = acc.hideAvatar | (setting.leaderboard.hideAvatar || 0);
-                        acc.hideName = acc.hideName | (setting.leaderboard.hideName || 0);
+                        acc.hideAvatar = acc.hideAvatar || !!setting.leaderboard.hideAvatar;
+                        acc.hideName = acc.hideName || !!setting.leaderboard.hideName;
                     }
                     return acc;
                 },
-                { hideAvatar: 0, hideName: 0 }
+                { hideAvatar: false as boolean, hideName: false as boolean }
             );
         }
 

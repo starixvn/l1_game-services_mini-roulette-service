@@ -78,7 +78,12 @@ export default class RouletteLeaderboardAccumulator {
             .exec();
 
         if (!newBets.length) {
-            await RouletteLeaderboardModel.findOneAndUpdate({ date: dateKey }, { updatedAt: new Date() }, { upsert: true }).exec();
+            const defaultLeaderboard = cache?.leaderboard || [];
+            await RouletteLeaderboardModel.findOneAndUpdate(
+                { date: dateKey },
+                { leaderboard: defaultLeaderboard, updatedAt: new Date() },
+                { upsert: true }
+            ).exec();
             return;
         }
 

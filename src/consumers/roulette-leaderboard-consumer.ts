@@ -43,8 +43,7 @@ export default class RouletteLeaderboardConsumer {
                 try {
                     const userSettings = await this.langliveUserSettingConsumer.getLangliveUserSettings(player.uid);
 
-                    const hideAvatar = Boolean(userSettings?.leaderboard?.hideAvatar);
-                    const hideName = Boolean(userSettings?.leaderboard?.hideName);
+                    const formattedUserSettings = this.formatUserSettings(userSettings);
 
                     if (player.uid === uid) {
                         currentPlayerSettings = userSettings;
@@ -52,8 +51,8 @@ export default class RouletteLeaderboardConsumer {
 
                     return {
                         ...rest,
-                        avatarUrl: hideAvatar ? null : userSettings?.avatarUrl || "",
-                        nickname: hideName ? null : userSettings?.nickname || "",
+                        avatarUrl: formattedUserSettings.avatarUrl,
+                        nickname: formattedUserSettings.nickname,
                     };
                 } catch (error) {
                     this.logService.logError(`Error getting user settings for player ${player.uid}: ${JSON.stringify(error)}`);
@@ -72,7 +71,7 @@ export default class RouletteLeaderboardConsumer {
         if (currentPlayerSettings == null) {
             try {
                 const userSettings = await this.langliveUserSettingConsumer.getLangliveUserSettings(uid);
-                currentPlayerSettings = userSettings;
+                currentPlayerSettings = this.formatUserSettings(userSettings);
             } catch (error) {
                 this.logService.logError(`Error getting user settings for current player ${uid}: ${JSON.stringify(error)}`);
                 currentPlayerSettings = null;
@@ -87,6 +86,25 @@ export default class RouletteLeaderboardConsumer {
                 totalWin: player?.totalWin || 0,
             },
             time: leaderboard.updatedAt.toISOString(),
+        };
+    }
+
+    formatUserSettings(userSettings: {
+        leaderboard: {
+            hideAvatar: number;
+            hideName: number;
+        };
+        avatarUrl: string;
+        nickname: string;
+    }) {
+        const hideAvatar = Boolean(userSettings.leaderboard.hideAvatar);
+        const hideName = Boolean(userSettings.leaderboard.hideName);
+        return {
+            leaderboard: {
+                ...userSettings.leaderboard,
+            },
+            avatarUrl: hideAvatar ? null : userSettings.avatarUrl,
+            nickname: hideName ? null : userSettings.nickname,
         };
     }
 }

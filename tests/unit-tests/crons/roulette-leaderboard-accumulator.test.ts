@@ -138,6 +138,10 @@ describe("RouletteLeaderboardAccumulator", () => {
         it("should handle case when no new bets are found", async () => {
             const mockCache = {
                 lastProcessedTime: startOfDay,
+                leaderboard: [
+                    { uid: "user1", totalWin: 100, rank: 1 },
+                    { uid: "user2", totalWin: 50, rank: 2 },
+                ],
             };
             (RouletteLeaderboardModel.findOne as jest.Mock).mockReturnValue({
                 lean: jest.fn().mockReturnValue({
@@ -154,7 +158,28 @@ describe("RouletteLeaderboardAccumulator", () => {
 
             expect(RouletteLeaderboardModel.findOneAndUpdate).toHaveBeenCalledWith(
                 { date: dateKey },
-                { updatedAt: expect.any(Date) },
+                { leaderboard: mockCache.leaderboard, updatedAt: expect.any(Date) },
+                { upsert: true }
+            );
+        });
+
+        it("should handle case when no new bets are found and no cache exists", async () => {
+            (RouletteLeaderboardModel.findOne as jest.Mock).mockReturnValue({
+                lean: jest.fn().mockReturnValue({
+                    exec: jest.fn().mockResolvedValue(null),
+                }),
+            });
+            (RouletteBets.find as jest.Mock).mockReturnValue({
+                lean: jest.fn().mockReturnValue({
+                    exec: jest.fn().mockResolvedValue([]),
+                }),
+            });
+
+            await accumulator.accumulateIncremental(testDate);
+
+            expect(RouletteLeaderboardModel.findOneAndUpdate).toHaveBeenCalledWith(
+                { date: dateKey },
+                { leaderboard: [], updatedAt: expect.any(Date) },
                 { upsert: true }
             );
         });

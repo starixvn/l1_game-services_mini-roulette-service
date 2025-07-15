@@ -46,7 +46,7 @@ export default class RouletteLeaderboardConsumer {
                     const formattedUserSettings = this.formatUserSettings(userSettings);
 
                     if (player.uid === uid) {
-                        currentPlayerSettings = userSettings;
+                        currentPlayerSettings = formattedUserSettings;
                     }
 
                     return {

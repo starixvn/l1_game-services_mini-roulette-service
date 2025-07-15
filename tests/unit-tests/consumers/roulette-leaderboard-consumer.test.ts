@@ -142,8 +142,10 @@ describe("RouletteLeaderboardConsumer", () => {
         expect(result.currentPlayer).toMatchObject({
             rank: 1,
             currentPlayerSettings: {
-                avatarUrl: "avatar_user1",
-                nickname: "nick_user1",
+                avatarUrl: null,
+                nickname: null,
+                hideAvatar: true,
+                hideName: true,
             },
         });
     });

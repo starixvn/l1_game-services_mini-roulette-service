@@ -69,15 +69,13 @@ export default class RouletteProcessBetQueue extends Crons.ProcessBetQueue {
 
     composeSettleValidationCriteria(player: any) {
         const playerData = this.gameData.ingame?.[player.profile.name];
-        const { betQueue, betTracks, roundId, settleProcessing } = playerData || {
+        const { betQueue, roundId, settleProcessing } = playerData || {
             betTracks: {},
             betQueue: [],
             roundId: 0,
             settleProcessing: false,
         };
-        const total = Object.values(betTracks as Record<string, Record<string, number>>).reduce((acc, curr) => {
-            return Object.values(curr).reduce((acc, curr) => acc + curr, acc);
-        }, 0);
+        const total = this.getTotalAmountInBetTracks(player.profile.name);
         const criteria = [
             { failure: !playerData, errorCode: helpers.noticeHelper.invalidBet },
             { failure: betQueue.length > 0, errorCode: notices.processingAction },
@@ -177,6 +175,18 @@ export default class RouletteProcessBetQueue extends Crons.ProcessBetQueue {
 
     decreaseBetTracks(playerName: string, bet: any) {
         bet && this.adjustBetTracks(playerName, bet, true);
+        const total = this.getTotalAmountInBetTracks(playerName);
+        if (total === 0) {
+            this.gameData.ingame[playerName].roundId = 0;
+        }
+    }
+
+    getTotalAmountInBetTracks(playerName: string) {
+        const playerData = this.gameData.ingame?.[playerName];
+        const { betTracks } = playerData || { betTracks: {} };
+        return Object.values(betTracks as Record<string, Record<string, number>>).reduce((acc, curr) => {
+            return Object.values(curr).reduce((acc, curr) => acc + curr, acc);
+        }, 0);
     }
 
     adjustBetTracks = (playerName: string, bet: any, reduce = false) => {

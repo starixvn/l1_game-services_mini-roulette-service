@@ -100,9 +100,8 @@ export default class RouletteLeaderboardConsumer {
         const hideAvatar = Boolean(userSettings.leaderboard.hideAvatar);
         const hideName = Boolean(userSettings.leaderboard.hideName);
         return {
-            leaderboard: {
-                ...userSettings.leaderboard,
-            },
+            hideAvatar,
+            hideName,
             avatarUrl: hideAvatar ? null : userSettings.avatarUrl,
             nickname: hideName ? null : userSettings.nickname,
         };

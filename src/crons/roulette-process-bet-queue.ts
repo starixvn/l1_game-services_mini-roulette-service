@@ -30,7 +30,7 @@ export default class RouletteProcessBetQueue extends Crons.ProcessBetQueue {
     }
 
     private async proceedActionBet(player: any, payload: any) {
-        if (this.gameData.ingame?.[player.profile.name]?.roundId === 0) {
+        if (!this.gameData.ingame?.[player.profile.name]?.roundId) {
             this.gameData.ingame[player.profile.name].roundId = this.gameData.roundId;
             this.gameData.roundId++;
         }
@@ -42,7 +42,6 @@ export default class RouletteProcessBetQueue extends Crons.ProcessBetQueue {
         if (!(await this.validateSettleRequest(player))) {
             return;
         }
-        this.gameData.ingame[player.profile.name].settleProcessing = true;
         const roundId = this.gameData.ingame[player.profile.name].roundId;
         await this.settleGameRoundConsumer.settleRoundById(roundId, player.profile.name);
     }

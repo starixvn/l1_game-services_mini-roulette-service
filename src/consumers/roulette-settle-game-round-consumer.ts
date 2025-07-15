@@ -34,6 +34,7 @@ export default class RouletteSettleGameRoundConsumer extends SettleGameRoundCons
     }
 
     async settleRoundById(roundId: number, playerName: string) {
+        this.gameData.ingame[playerName] && (this.gameData.ingame[playerName].settleProcessing = true);
         const bet = await this.betsRepository.findOne({ roundId }).exec();
         if (bet) {
             bet.paid !== true && (await this.settleBet(bet));

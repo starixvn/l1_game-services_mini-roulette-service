@@ -1,7 +1,7 @@
 import Constants from "../constants";
 import { convertToGMTDate, getStartDate } from "../helpers/day-helper";
 import { RouletteGameData } from "../roulette-game-data";
-import { GuaranteedConfig, GuaranteedFeature, RouletteBet, ThresholdSetting } from "../types";
+import { GuaranteedConfig, GuaranteedFeature, PlayerBetHistory, RouletteBet, ThresholdSetting } from "../types";
 
 export default class RouletteGuaranteedFeatureConsumer {
     declare gameData: RouletteGameData;
@@ -71,10 +71,14 @@ export default class RouletteGuaranteedFeatureConsumer {
         if (!thresholdSetting) {
             return defaultStatus;
         }
-        if (thresholdSetting.enabledWeakened && this.isReachedWeakened(uid, accumulatedAmount)) {
+        const latestBet = this.getPlayerLatestBet(uid);
+        if (!latestBet) {
+            return defaultStatus;
+        }
+        if (thresholdSetting.enabledWeakened && this.isReachedWeakened(accumulatedAmount, latestBet)) {
             return { status: Constants.guaranteedStatus.weakened, winningPercentage: thresholdSetting.weakenedWinningPercentage };
         }
-        if (this.isReachedNormal(accumulatedAmount, thresholdSetting, config.floating)) {
+        if (this.isReachedNormal(accumulatedAmount, thresholdSetting, config.floating, latestBet)) {
             return { status: Constants.guaranteedStatus.normal, winningPercentage: thresholdSetting.normalWinningPercentage };
         }
         return defaultStatus;
@@ -87,20 +91,20 @@ export default class RouletteGuaranteedFeatureConsumer {
         );
     }
 
-    private isReachedNormal(accumulatedAmount: number, thresholdSetting: ThresholdSetting, floating: number) {
+    private isReachedNormal(accumulatedAmount: number, thresholdSetting: ThresholdSetting, floating: number, latestBet: PlayerBetHistory) {
+        const hasControlLatestBet = !!latestBet.guaranteedLossStatus || !!latestBet.guaranteedWinStatus;
+        if (hasControlLatestBet) {
+            return true;
+        }
         const floatingValue = floating ? Math.floor(Math.random() * (floating * 2 + 1) - floating) / 100 : 0;
         const adjustedThreshold = thresholdSetting.threshold - floatingValue * thresholdSetting.threshold;
         return Math.abs(accumulatedAmount) >= adjustedThreshold;
     }
 
-    private isReachedWeakened(uid: string, accumulatedAmount: number) {
-        const latestBet = this.getPlayerLatestBet(uid);
-        if (!latestBet) {
-            return false;
-        }
+    private isReachedWeakened(accumulatedAmount: number, latestBet: PlayerBetHistory) {
         const isLatestBetWin = latestBet.betwin - latestBet.totalAmount > 0;
         const currentStatus = accumulatedAmount > 0 ? latestBet.guaranteedLossStatus : latestBet.guaranteedWinStatus;
-        if (currentStatus === Constants.guaranteedStatus.normal) {
+        if (currentStatus !== Constants.guaranteedStatus.exited) {
             return accumulatedAmount > 0 ? !isLatestBetWin : isLatestBetWin;
         }
         return false;

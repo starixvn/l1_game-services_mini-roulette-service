@@ -9,7 +9,7 @@ export default {
             secret: "gameserver@20luminet&",
         },
         useAuthenticate: true,
-        placeBetTimeout: 5000,
+        placeBetTimeout: 10000,
         requestTimeout: 10000, // 10s
         enabledApiLogs: true,
     },

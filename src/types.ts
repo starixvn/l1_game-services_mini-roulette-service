@@ -89,3 +89,12 @@ export type GuaranteedStatus = {
     isReached: boolean;
     accumulatedAmount: number;
 };
+
+export type PlayerBetHistory = {
+    totalAmount: number;
+    betwin: number;
+    time: Date;
+    guaranteedWinStatus: string;
+    guaranteedLossStatus: string;
+    roundId: number;
+};

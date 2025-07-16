@@ -13,6 +13,7 @@ import {
     LangliveUserSettingConsumer,
     RouletteUserSigninConsumer,
     RebetConsumer,
+    RoundIdConsumer,
 } from "./consumers";
 import { RouletteGameCron, RouletteLeaderboardAccumulator, RouletteProcessBetQueue } from "./crons";
 import { RouletteBets, RouletteRounds, RouletteBetLogs } from "./models";
@@ -35,6 +36,7 @@ export default class RouletteContainerRegistry extends Table.TableContainerRegis
             langliveUserSettingConsumer: asClass(LangliveUserSettingConsumer).singleton().proxy(),
             userSignInConsumer: asClass(RouletteUserSigninConsumer).singleton(),
             rebetConsumer: asClass(RebetConsumer).singleton().proxy(),
+            roundIdConsumer: asClass(RoundIdConsumer).singleton(),
         });
     }
 

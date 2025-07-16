@@ -9,6 +9,7 @@ import RouletteLeaderboardConsumer from "./roulette-leaderboard-consumer";
 import LangliveUserSettingConsumer from "./langlive-user-setting-consumer";
 import RouletteUserSigninConsumer from "./roulette-user-signin-consumer";
 import RebetConsumer from "./roulette-rebet-consumer";
+import RoundIdConsumer from "./roulette-round-id-consumer";
 
 export {
     PlaceBetConsumer,
@@ -22,4 +23,5 @@ export {
     LangliveUserSettingConsumer,
     RouletteUserSigninConsumer,
     RebetConsumer,
+    RoundIdConsumer,
 };

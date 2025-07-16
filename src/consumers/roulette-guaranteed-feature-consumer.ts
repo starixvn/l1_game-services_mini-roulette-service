@@ -17,14 +17,13 @@ export default class RouletteGuaranteedFeatureConsumer {
         const accumulatedAmount = await this.calculatePlayerAccumulatedAmount(uid, guaranteedFeature);
         const config = this.getApplicableGuaranteedConfig(guaranteedFeature, accumulatedAmount);
         const reachedStatus = this.determineGuaranteedStatus(uid, accumulatedAmount, config);
-        return reachedStatus?.status
-            ? {
-                  guaranteedWinStatus: accumulatedAmount < 0 ? reachedStatus.status : "",
-                  guaranteedLossStatus: accumulatedAmount > 0 ? reachedStatus.status : "",
-                  winningPercentage: reachedStatus.winningPercentage,
-                  accumulatedAmount,
-              }
-            : null;
+        return {
+            guaranteedWinStatus: accumulatedAmount < 0 ? reachedStatus.status : "",
+            guaranteedLossStatus: accumulatedAmount > 0 ? reachedStatus.status : "",
+            winningPercentage: reachedStatus.winningPercentage,
+            isReached: !!reachedStatus?.status,
+            accumulatedAmount,
+        };
     }
 
     private async calculatePlayerAccumulatedAmount(uid: string, guaranteedFeature: GuaranteedFeature) {

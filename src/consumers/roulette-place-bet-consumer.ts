@@ -149,6 +149,7 @@ export default class RoulettePlaceBetConsumer extends PlaceBetConsumer {
             this.gameData.ingame[name] = newPlayer;
         }
         this.adjustBetTracks(player.profile.name, payload);
+        this.gameData.ingame[name].betStartTime = new Date();
         this.gameData.ingame[name].betQueue.push({ player, payload });
     }
 

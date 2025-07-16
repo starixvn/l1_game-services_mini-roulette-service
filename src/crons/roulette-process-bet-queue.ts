@@ -107,6 +107,7 @@ export default class RouletteProcessBetQueue extends Crons.ProcessBetQueue {
             newBet.rate = rate;
             newBet.operatorId = player.session.operatorId;
             newBet.playerId = player.session.playerId;
+            newBet.appType = player.session.system;
             newBet.currencyGroupId = player.session.currencyGroupId;
             newBet.guaranteedFeature = this.gameData.guaranteedFeature[player.session.currencyGroupId];
         }
@@ -136,6 +137,7 @@ export default class RouletteProcessBetQueue extends Crons.ProcessBetQueue {
             newBetLog.rate = rate;
             newBetLog.operatorId = player.session.operatorId;
             newBetLog.playerId = player.session.playerId;
+            newBetLog.appType = player.session.system;
             newBetLog.currencyGroupId = player.session.currencyGroupId;
         }
 

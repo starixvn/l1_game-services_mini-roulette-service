@@ -18,6 +18,7 @@ export type RouletteBet = {
     roundId: number;
     paid?: boolean;
     clientSeed?: Date;
+    appType?: number;
     currencyGroupId?: string;
     guaranteedFeature?: GuaranteedFeature;
     guaranteedWinStatus?: string;
@@ -45,6 +46,7 @@ export type RouletteBetLog = {
     operatorId?: string;
     roundId?: number;
     currencyGroupId?: string;
+    appType?: number;
 };
 
 export type SettlementResult = {
@@ -84,4 +86,6 @@ export type GuaranteedStatus = {
     guaranteedWinStatus: string;
     guaranteedLossStatus: string;
     winningPercentage: number;
+    isReached: boolean;
+    accumulatedAmount: number;
 };

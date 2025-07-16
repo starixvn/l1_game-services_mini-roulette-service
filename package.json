@@ -30,7 +30,7 @@
         "random": "^3.0.3",
         "random-int": "^3.0.0",
         "random-js": "^2.1.0",
-        "sc-game-base": "5.4.0-beta.6",
+        "sc-game-base": "5.4.0-beta.7",
         "sc-game-management-client": "0.1.5-beta.1"
     },
     "resolutions": {
@@ -46,7 +46,7 @@
         "@types/jest": "^29.5.12",
         "@types/lodash": "^4.17.16",
         "@types/sc-common": "1.0.1-beta.0",
-        "@types/sc-game-base": "1.0.0-beta.11",
+        "@types/sc-game-base": "1.0.0-beta.12",
         "@types/sc-game-service-integration-utils": "1.0.0",
         "@types/socket.io": "^3.0.2",
         "husky": "^9.1.7",

@@ -34,7 +34,7 @@ export default class RouletteLeaderboardConsumer {
             return { leaderboard: [], currentPlayer: { rank: -1, currentPlayerSettings: null, totalWin: 0 }, time: date.toISOString() };
         }
 
-        const slicedLeaderboard = leaderboard.leaderboard.slice(0, top);
+        const slicedLeaderboard = leaderboard.leaderboard.slice(0, top).filter((x) => x.totalWin > 0);
         let currentPlayerSettings = null;
 
         const enhancedLeaderboard = await Promise.all(

@@ -149,4 +149,31 @@ describe("RouletteLeaderboardConsumer", () => {
             },
         });
     });
+
+    it("should only include top N players with totalWin > 0", async () => {
+        const leaderboardDoc = {
+            leaderboard: [
+                { uid: "user1", totalWin: 100, rank: 1 },
+                { uid: "user2", totalWin: 50, rank: 2 },
+                { uid: "user3", totalWin: 30, rank: 3 },
+                { uid: "user4", totalWin: 0, rank: 4 },
+            ],
+            updatedAt: new Date(),
+        };
+        (RouletteLeaderboardModel.findOne as jest.Mock).mockReturnValue({
+            lean: jest.fn().mockReturnValueOnce({
+                exec: jest.fn().mockResolvedValue(leaderboardDoc),
+            }),
+        });
+        mockLangliveUserSettingConsumer.getLangliveUserSettings.mockResolvedValue({
+            avatarUrl: "avatar",
+            nickname: "nick",
+            leaderboard: { hideAvatar: 0, hideName: 0 },
+        });
+        const player = { UID: "user1" };
+
+        const result = await consumer.consume(player, { top: 4 });
+
+        expect(result.leaderboard.length).toBe(3);
+    });
 });

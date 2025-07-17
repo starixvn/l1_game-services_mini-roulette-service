@@ -34,7 +34,6 @@ export default class RouletteLeaderboardAccumulator {
         const job = new cron.CronJob({
             cronTime: this.appConfigs?.cronTimeGetLeaderboard || "*/5 * * * *",
             onTick: () => {
-                // Prevent multiple instances from running simultaneously
                 if (this.isRunning) {
                     this.logService.logError(
                         `${this.definition.name} leaderboard accumulation is already running, skipping this execution.`
@@ -67,76 +66,117 @@ export default class RouletteLeaderboardAccumulator {
         const end = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
         const dateKey = date.toISOString().slice(0, 10);
 
-        let cache = await RouletteLeaderboardModel.findOne({ date: dateKey }).lean().exec();
-        let lastProcessedTime = cache?.lastProcessedTime || start;
+        const existingLeaderboards = await RouletteLeaderboardModel.find({ date: dateKey }).lean().exec();
+        const leaderboardMap = new Map();
 
-        const newBets = await RouletteBets.find({
+        existingLeaderboards.forEach((leaderboard) => {
+            const key = `${leaderboard.currency}:${leaderboard.operatorId}`;
+            leaderboardMap.set(key, {
+                lastProcessedTime: leaderboard.lastProcessedTime || start,
+                leaderboard: leaderboard.leaderboard || [],
+            });
+        });
+
+        const allBets = await RouletteBets.find({
             paid: true,
-            time: { $gt: lastProcessedTime, $lte: end },
+            time: { $gte: start, $lte: end },
         })
             .lean()
             .exec();
 
-        if (!newBets.length) {
-            const defaultLeaderboard = cache?.leaderboard || [];
+        const betsByCurrencyOperator = new Map();
+
+        for (const bet of allBets) {
+            if (!bet.currency || !bet.operatorId) continue;
+
+            const key = `${bet.currency}:${bet.operatorId}`;
+            const lastProcessedTime = leaderboardMap.get(key)?.lastProcessedTime || start;
+
+            if (bet.time > lastProcessedTime) {
+                if (!betsByCurrencyOperator.has(key)) {
+                    betsByCurrencyOperator.set(key, {
+                        currency: bet.currency,
+                        operatorId: bet.operatorId,
+                        bets: [],
+                    });
+                }
+                betsByCurrencyOperator.get(key).bets.push(bet);
+            }
+        }
+
+        for (const [key, data] of betsByCurrencyOperator.entries()) {
+            const { currency, operatorId, bets } = data;
+
+            const playerMap = new Map();
+            for (const bet of bets) {
+                const uid = bet.uid;
+                const betwin = typeof bet.betwin === "number" && !isNaN(bet.betwin) ? bet.betwin : 0;
+
+                if (!playerMap.has(uid)) {
+                    playerMap.set(uid, { totalWin: 0 });
+                }
+                const entry = playerMap.get(uid);
+                entry.totalWin += betwin;
+            }
+
+            const existingData = leaderboardMap.get(key);
+            let leaderboard = existingData?.leaderboard || [];
+            const leaderboardMapForUpdate = new Map();
+
+            for (const entry of leaderboard) {
+                const totalWin = typeof entry.totalWin === "number" && !isNaN(entry.totalWin) ? entry.totalWin : 0;
+                leaderboardMapForUpdate.set(entry.uid, { ...entry, totalWin });
+            }
+
+            for (const [uid, { totalWin }] of playerMap.entries()) {
+                if (leaderboardMapForUpdate.has(uid)) {
+                    const entry = leaderboardMapForUpdate.get(uid);
+                    entry.totalWin += totalWin;
+                } else {
+                    leaderboardMapForUpdate.set(uid, {
+                        uid,
+                        totalWin,
+                        rank: 0,
+                    });
+                }
+            }
+
+            leaderboard = Array.from(leaderboardMapForUpdate.values());
+            leaderboard.sort((a: any, b: any) => {
+                const aWin = typeof a.totalWin === "number" && !isNaN(a.totalWin) ? a.totalWin : 0;
+                const bWin = typeof b.totalWin === "number" && !isNaN(b.totalWin) ? b.totalWin : 0;
+                return bWin - aWin;
+            });
+            leaderboard.forEach((entry: any, idx: number) => (entry.rank = idx + 1));
+
+            const newestTime = bets.reduce(
+                (max: Date, bet: any) => (bet.time > max ? bet.time : max),
+                existingData?.lastProcessedTime || start
+            );
+
             await RouletteLeaderboardModel.findOneAndUpdate(
-                { date: dateKey },
-                { leaderboard: defaultLeaderboard, updatedAt: new Date() },
-                { upsert: true }
+                { date: dateKey, currency: currency, operatorId: operatorId },
+                {
+                    leaderboard: leaderboard,
+                    updatedAt: new Date(),
+                    lastProcessedTime: newestTime,
+                },
+                { upsert: true, new: true }
             ).exec();
-            return;
         }
 
-        const playerMap = new Map();
-        for (const bet of newBets) {
-            const uid = bet.uid;
-            const betwin = typeof bet.betwin === "number" && !isNaN(bet.betwin) ? bet.betwin : 0;
-
-            if (!playerMap.has(uid)) {
-                playerMap.set(uid, { totalWin: 0 });
-            }
-            const entry = playerMap.get(uid);
-            entry.totalWin += betwin;
-        }
-
-        let leaderboard = cache?.leaderboard || [];
-        const leaderboardMap = new Map();
-        for (const entry of leaderboard) {
-            const totalWin = typeof entry.totalWin === "number" && !isNaN(entry.totalWin) ? entry.totalWin : 0;
-            leaderboardMap.set(entry.uid, { ...entry, totalWin });
-        }
-
-        for (const [uid, { totalWin }] of playerMap.entries()) {
-            if (leaderboardMap.has(uid)) {
-                const entry = leaderboardMap.get(uid);
-                entry.totalWin += totalWin;
-            } else {
-                leaderboardMap.set(uid, {
-                    uid,
-                    totalWin,
-                    rank: 0,
-                });
+        for (const [key, data] of leaderboardMap.entries()) {
+            if (!betsByCurrencyOperator.has(key)) {
+                const [currency, operatorId] = key.split(":");
+                await RouletteLeaderboardModel.findOneAndUpdate(
+                    { date: dateKey, currency: currency, operatorId: operatorId },
+                    {
+                        leaderboard: data.leaderboard,
+                        updatedAt: new Date(),
+                    },
+                    { upsert: true }
+                ).exec();
             }
         }
-
-        leaderboard = Array.from(leaderboardMap.values());
-        leaderboard.sort((a, b) => {
-            const aWin = typeof a.totalWin === "number" && !isNaN(a.totalWin) ? a.totalWin : 0;
-            const bWin = typeof b.totalWin === "number" && !isNaN(b.totalWin) ? b.totalWin : 0;
-            return bWin - aWin;
-        });
-        leaderboard.forEach((entry, idx) => (entry.rank = idx + 1));
-
-        const newestTime = newBets.reduce((max: Date, bet: any) => (bet.time > max ? bet.time : max), lastProcessedTime);
-
-        await RouletteLeaderboardModel.findOneAndUpdate(
-            { date: dateKey },
-            {
-                leaderboard: leaderboard,
-                updatedAt: new Date(),
-                lastProcessedTime: newestTime,
-            },
-            { upsert: true, new: true }
-        ).exec();
     }
 }

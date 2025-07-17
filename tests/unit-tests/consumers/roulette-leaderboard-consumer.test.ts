@@ -37,10 +37,20 @@ describe("RouletteLeaderboardConsumer", () => {
                 exec: jest.fn().mockResolvedValue(null),
             }),
         });
-        const player = { UID: "user1" };
+        const player = {
+            UID: "user1",
+            session: {
+                currencyName: "USD",
+                operatorId: "test-operator",
+            },
+        };
 
         const result = await consumer.consume(player, { top: 10 });
 
+        expect(RouletteLeaderboardModel.findOne).toHaveBeenCalledWith(
+            { date: expect.any(String), currency: "USD", operatorId: "test-operator" },
+            { _id: 0, __v: 0, "leaderboard._id": 0 }
+        );
         expect(result.leaderboard).toEqual([]);
         expect(result.currentPlayer.rank).toBe(-1);
     });
@@ -67,10 +77,20 @@ describe("RouletteLeaderboardConsumer", () => {
                 })
             )
         );
-        const player = { UID: "user1" };
+        const player = {
+            UID: "user1",
+            session: {
+                currencyName: "USD",
+                operatorId: "test-operator",
+            },
+        };
 
         const result = await consumer.consume(player, { top: 2 });
 
+        expect(RouletteLeaderboardModel.findOne).toHaveBeenCalledWith(
+            { date: expect.any(String), currency: "USD", operatorId: "test-operator" },
+            { _id: 0, __v: 0, "leaderboard._id": 0 }
+        );
         expect(result.leaderboard[0].avatarUrl).toBe("avatar_user1");
         expect(result.leaderboard[0].nickname).toBe("nick_user1");
     });
@@ -90,10 +110,20 @@ describe("RouletteLeaderboardConsumer", () => {
             nickname: "nick_user1",
             leaderboard: { hideAvatar: 1, hideName: 1 },
         });
-        const player = { UID: "user1" };
+        const player = {
+            UID: "user1",
+            session: {
+                currencyName: "USD",
+                operatorId: "test-operator",
+            },
+        };
 
         const result = await consumer.consume(player, { top: 1 });
 
+        expect(RouletteLeaderboardModel.findOne).toHaveBeenCalledWith(
+            { date: expect.any(String), currency: "USD", operatorId: "test-operator" },
+            { _id: 0, __v: 0, "leaderboard._id": 0 }
+        );
         expect(result.leaderboard[0].avatarUrl).toBeNull();
         expect(result.leaderboard[0].nickname).toBeNull();
     });
@@ -109,10 +139,20 @@ describe("RouletteLeaderboardConsumer", () => {
             }),
         });
         mockLangliveUserSettingConsumer.getLangliveUserSettings.mockRejectedValue(new Error("fail"));
-        const player = { UID: "user1" };
+        const player = {
+            UID: "user1",
+            session: {
+                currencyName: "USD",
+                operatorId: "test-operator",
+            },
+        };
 
         const result = await consumer.consume(player, { top: 1 });
 
+        expect(RouletteLeaderboardModel.findOne).toHaveBeenCalledWith(
+            { date: expect.any(String), currency: "USD", operatorId: "test-operator" },
+            { _id: 0, __v: 0, "leaderboard._id": 0 }
+        );
         expect(result.leaderboard[0].avatarUrl).toBe("");
         expect(result.leaderboard[0].nickname).toBe("");
     });
@@ -135,10 +175,20 @@ describe("RouletteLeaderboardConsumer", () => {
             nickname: "nick_user1",
             leaderboard: { hideAvatar: 1, hideName: 1 },
         });
-        const player = { UID: "user1" };
+        const player = {
+            UID: "user1",
+            session: {
+                currencyName: "USD",
+                operatorId: "test-operator",
+            },
+        };
 
         const result = await consumer.consume(player, { top: 1 });
 
+        expect(RouletteLeaderboardModel.findOne).toHaveBeenCalledWith(
+            { date: expect.any(String), currency: "USD", operatorId: "test-operator" },
+            { _id: 0, __v: 0, "leaderboard._id": 0 }
+        );
         expect(result.currentPlayer).toMatchObject({
             rank: 1,
             currentPlayerSettings: {
@@ -170,10 +220,20 @@ describe("RouletteLeaderboardConsumer", () => {
             nickname: "nick",
             leaderboard: { hideAvatar: 0, hideName: 0 },
         });
-        const player = { UID: "user1" };
+        const player = {
+            UID: "user1",
+            session: {
+                currencyName: "USD",
+                operatorId: "test-operator",
+            },
+        };
 
         const result = await consumer.consume(player, { top: 4 });
 
+        expect(RouletteLeaderboardModel.findOne).toHaveBeenCalledWith(
+            { date: expect.any(String), currency: "USD", operatorId: "test-operator" },
+            { _id: 0, __v: 0, "leaderboard._id": 0 }
+        );
         expect(result.leaderboard.length).toBe(3);
     });
 });

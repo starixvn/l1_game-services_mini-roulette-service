@@ -23,13 +23,20 @@ export default class RouletteLeaderboardConsumer {
     }
 
     async consume(player: any, payload: { top: number } = { top: 30 }) {
-        const leaderboard = await this.getLeaderboardByDay(new Date(), player.UID, payload.top);
+        const { session, UID } = player;
+        const { currencyName, operatorId } = session;
+        const leaderboard = await this.getLeaderboardByDay(new Date(), UID, payload.top, currencyName, operatorId);
         return leaderboard;
     }
 
-    async getLeaderboardByDay(date: Date, uid: string, top: number) {
+    async getLeaderboardByDay(date: Date, uid: string, top: number, currency: string, operatorId: string) {
         const key = date.toISOString().split("T")[0];
-        const leaderboard = await RouletteLeaderboardModel.findOne({ date: key }, { _id: 0, __v: 0, "leaderboard._id": 0 }).lean().exec();
+        const leaderboard = await RouletteLeaderboardModel.findOne(
+            { date: key, currency: currency, operatorId },
+            { _id: 0, __v: 0, "leaderboard._id": 0 }
+        )
+            .lean()
+            .exec();
         if (!leaderboard) {
             return { leaderboard: [], currentPlayer: { rank: -1, currentPlayerSettings: null, totalWin: 0 }, time: date.toISOString() };
         }

@@ -13,7 +13,7 @@ jest.mock("../../../src/models", () => ({
         find: jest.fn(),
     },
     RouletteLeaderboardModel: {
-        findOne: jest.fn(),
+        find: jest.fn(),
         findOneAndUpdate: jest.fn().mockReturnValue({
             exec: jest.fn(),
         }),
@@ -113,6 +113,24 @@ describe("RouletteLeaderboardAccumulator", () => {
 
             expect(mockLogService.logError).toHaveBeenCalled();
         });
+
+        it("should prevent concurrent executions when already running", async () => {
+            const cron = require("cron");
+            let onTickCallback: Function | undefined;
+            cron.CronJob.mockImplementation((config: any) => {
+                onTickCallback = config.onTick;
+                return { start: jest.fn() };
+            });
+
+            accumulator.start();
+
+            if (onTickCallback) {
+                await onTickCallback();
+                await onTickCallback();
+            }
+
+            expect(mockLogService.logError).toHaveBeenCalledWith(expect.stringContaining("leaderboard accumulation is already running"));
+        });
     });
 
     describe("accumulateIncremental", () => {
@@ -122,7 +140,7 @@ describe("RouletteLeaderboardAccumulator", () => {
         const dateKey = testDate.toISOString().slice(0, 10);
 
         beforeEach(() => {
-            (RouletteLeaderboardModel.findOne as jest.Mock).mockReturnValue({
+            (RouletteLeaderboardModel.find as jest.Mock).mockReturnValue({
                 lean: jest.fn().mockReturnValue({
                     exec: jest.fn(),
                 }),
@@ -135,17 +153,10 @@ describe("RouletteLeaderboardAccumulator", () => {
             });
         });
 
-        it("should handle case when no new bets are found", async () => {
-            const mockCache = {
-                lastProcessedTime: startOfDay,
-                leaderboard: [
-                    { uid: "user1", totalWin: 100, rank: 1 },
-                    { uid: "user2", totalWin: 50, rank: 2 },
-                ],
-            };
-            (RouletteLeaderboardModel.findOne as jest.Mock).mockReturnValue({
+        it("should handle case when no existing leaderboards and no new bets", async () => {
+            (RouletteLeaderboardModel.find as jest.Mock).mockReturnValue({
                 lean: jest.fn().mockReturnValue({
-                    exec: jest.fn().mockResolvedValue(mockCache),
+                    exec: jest.fn().mockResolvedValue([]),
                 }),
             });
             (RouletteBets.find as jest.Mock).mockReturnValue({
@@ -156,43 +167,18 @@ describe("RouletteLeaderboardAccumulator", () => {
 
             await accumulator.accumulateIncremental(testDate);
 
-            expect(RouletteLeaderboardModel.findOneAndUpdate).toHaveBeenCalledWith(
-                { date: dateKey },
-                { leaderboard: mockCache.leaderboard, updatedAt: expect.any(Date) },
-                { upsert: true }
-            );
+            expect(RouletteLeaderboardModel.findOneAndUpdate).not.toHaveBeenCalled();
         });
 
-        it("should handle case when no new bets are found and no cache exists", async () => {
-            (RouletteLeaderboardModel.findOne as jest.Mock).mockReturnValue({
-                lean: jest.fn().mockReturnValue({
-                    exec: jest.fn().mockResolvedValue(null),
-                }),
-            });
-            (RouletteBets.find as jest.Mock).mockReturnValue({
+        it("should create new leaderboard for single currency/operator when no existing data", async () => {
+            (RouletteLeaderboardModel.find as jest.Mock).mockReturnValue({
                 lean: jest.fn().mockReturnValue({
                     exec: jest.fn().mockResolvedValue([]),
-                }),
-            });
-
-            await accumulator.accumulateIncremental(testDate);
-
-            expect(RouletteLeaderboardModel.findOneAndUpdate).toHaveBeenCalledWith(
-                { date: dateKey },
-                { leaderboard: [], updatedAt: expect.any(Date) },
-                { upsert: true }
-            );
-        });
-
-        it("should create new leaderboard when no cache exists", async () => {
-            (RouletteLeaderboardModel.findOne as jest.Mock).mockReturnValue({
-                lean: jest.fn().mockReturnValue({
-                    exec: jest.fn().mockResolvedValue(null),
                 }),
             });
             const mockBets = [
-                { uid: "user1", betwin: 100, time: new Date("2024-01-15T12:00:00Z") },
-                { uid: "user2", betwin: 50, time: new Date("2024-01-15T13:00:00Z") },
+                { uid: "user1", betwin: 100, time: new Date("2024-01-15T12:00:00Z"), currency: "USD", operatorId: "op1" },
+                { uid: "user2", betwin: 50, time: new Date("2024-01-15T13:00:00Z"), currency: "USD", operatorId: "op1" },
             ];
             (RouletteBets.find as jest.Mock).mockReturnValue({
                 lean: jest.fn().mockReturnValue({
@@ -203,35 +189,88 @@ describe("RouletteLeaderboardAccumulator", () => {
             await accumulator.accumulateIncremental(testDate);
 
             expect(RouletteLeaderboardModel.findOneAndUpdate).toHaveBeenCalledWith(
-                { date: dateKey },
+                { date: dateKey, currency: "USD", operatorId: "op1" },
                 {
                     leaderboard: [
                         { uid: "user1", totalWin: 100, rank: 1 },
                         { uid: "user2", totalWin: 50, rank: 2 },
                     ],
                     updatedAt: expect.any(Date),
-                    lastProcessedTime: expect.any(Date),
+                    lastProcessedTime: new Date("2024-01-15T13:00:00Z"),
                 },
                 { upsert: true, new: true }
             );
         });
 
-        it("should update existing leaderboard with new bets", async () => {
-            const mockCache = {
-                lastProcessedTime: startOfDay,
-                leaderboard: [
-                    { uid: "user1", totalWin: 200, rank: 1 },
-                    { uid: "user2", totalWin: 100, rank: 2 },
-                ],
-            };
-            (RouletteLeaderboardModel.findOne as jest.Mock).mockReturnValue({
+        it("should handle multiple currencies and operators", async () => {
+            (RouletteLeaderboardModel.find as jest.Mock).mockReturnValue({
                 lean: jest.fn().mockReturnValue({
-                    exec: jest.fn().mockResolvedValue(mockCache),
+                    exec: jest.fn().mockResolvedValue([]),
                 }),
             });
             const mockBets = [
-                { uid: "user1", betwin: 50, time: new Date("2024-01-15T12:00:00Z") },
-                { uid: "user3", betwin: 150, time: new Date("2024-01-15T13:00:00Z") },
+                { uid: "user1", betwin: 100, time: new Date("2024-01-15T12:00:00Z"), currency: "USD", operatorId: "op1" },
+                { uid: "user2", betwin: 50, time: new Date("2024-01-15T13:00:00Z"), currency: "EUR", operatorId: "op1" },
+                { uid: "user3", betwin: 75, time: new Date("2024-01-15T14:00:00Z"), currency: "USD", operatorId: "op2" },
+            ];
+            (RouletteBets.find as jest.Mock).mockReturnValue({
+                lean: jest.fn().mockReturnValue({
+                    exec: jest.fn().mockResolvedValue(mockBets),
+                }),
+            });
+
+            await accumulator.accumulateIncremental(testDate);
+
+            expect(RouletteLeaderboardModel.findOneAndUpdate).toHaveBeenCalledTimes(3);
+
+            // Check USD:op1
+            expect(RouletteLeaderboardModel.findOneAndUpdate).toHaveBeenCalledWith(
+                { date: dateKey, currency: "USD", operatorId: "op1" },
+                expect.objectContaining({
+                    leaderboard: [{ uid: "user1", totalWin: 100, rank: 1 }],
+                }),
+                { upsert: true, new: true }
+            );
+
+            // Check EUR:op1
+            expect(RouletteLeaderboardModel.findOneAndUpdate).toHaveBeenCalledWith(
+                { date: dateKey, currency: "EUR", operatorId: "op1" },
+                expect.objectContaining({
+                    leaderboard: [{ uid: "user2", totalWin: 50, rank: 1 }],
+                }),
+                { upsert: true, new: true }
+            );
+
+            // Check USD:op2
+            expect(RouletteLeaderboardModel.findOneAndUpdate).toHaveBeenCalledWith(
+                { date: dateKey, currency: "USD", operatorId: "op2" },
+                expect.objectContaining({
+                    leaderboard: [{ uid: "user3", totalWin: 75, rank: 1 }],
+                }),
+                { upsert: true, new: true }
+            );
+        });
+
+        it("should update existing leaderboard with new bets", async () => {
+            const existingLeaderboards = [
+                {
+                    currency: "USD",
+                    operatorId: "op1",
+                    lastProcessedTime: startOfDay,
+                    leaderboard: [
+                        { uid: "user1", totalWin: 200, rank: 1 },
+                        { uid: "user2", totalWin: 100, rank: 2 },
+                    ],
+                },
+            ];
+            (RouletteLeaderboardModel.find as jest.Mock).mockReturnValue({
+                lean: jest.fn().mockReturnValue({
+                    exec: jest.fn().mockResolvedValue(existingLeaderboards),
+                }),
+            });
+            const mockBets = [
+                { uid: "user1", betwin: 50, time: new Date("2024-01-15T12:00:00Z"), currency: "USD", operatorId: "op1" },
+                { uid: "user3", betwin: 150, time: new Date("2024-01-15T13:00:00Z"), currency: "USD", operatorId: "op1" },
             ];
             (RouletteBets.find as jest.Mock).mockReturnValue({
                 lean: jest.fn().mockReturnValue({
@@ -242,7 +281,7 @@ describe("RouletteLeaderboardAccumulator", () => {
             await accumulator.accumulateIncremental(testDate);
 
             expect(RouletteLeaderboardModel.findOneAndUpdate).toHaveBeenCalledWith(
-                { date: dateKey },
+                { date: dateKey, currency: "USD", operatorId: "op1" },
                 {
                     leaderboard: [
                         { uid: "user1", totalWin: 250, rank: 1 },
@@ -250,22 +289,22 @@ describe("RouletteLeaderboardAccumulator", () => {
                         { uid: "user2", totalWin: 100, rank: 3 },
                     ],
                     updatedAt: expect.any(Date),
-                    lastProcessedTime: expect.any(Date),
+                    lastProcessedTime: new Date("2024-01-15T13:00:00Z"),
                 },
                 { upsert: true, new: true }
             );
         });
 
         it("should handle multiple bets from the same user", async () => {
-            (RouletteLeaderboardModel.findOne as jest.Mock).mockReturnValue({
+            (RouletteLeaderboardModel.find as jest.Mock).mockReturnValue({
                 lean: jest.fn().mockReturnValue({
-                    exec: jest.fn().mockResolvedValue(null),
+                    exec: jest.fn().mockResolvedValue([]),
                 }),
             });
             const mockBets = [
-                { uid: "user1", betwin: 100, time: new Date("2024-01-15T12:00:00Z") },
-                { uid: "user1", betwin: 50, time: new Date("2024-01-15T13:00:00Z") },
-                { uid: "user1", betwin: 75, time: new Date("2024-01-15T14:00:00Z") },
+                { uid: "user1", betwin: 100, time: new Date("2024-01-15T12:00:00Z"), currency: "USD", operatorId: "op1" },
+                { uid: "user1", betwin: 50, time: new Date("2024-01-15T13:00:00Z"), currency: "USD", operatorId: "op1" },
+                { uid: "user1", betwin: 75, time: new Date("2024-01-15T14:00:00Z"), currency: "USD", operatorId: "op1" },
             ];
             (RouletteBets.find as jest.Mock).mockReturnValue({
                 lean: jest.fn().mockReturnValue({
@@ -276,72 +315,26 @@ describe("RouletteLeaderboardAccumulator", () => {
             await accumulator.accumulateIncremental(testDate);
 
             expect(RouletteLeaderboardModel.findOneAndUpdate).toHaveBeenCalledWith(
-                { date: dateKey },
+                { date: dateKey, currency: "USD", operatorId: "op1" },
                 {
                     leaderboard: [{ uid: "user1", totalWin: 225, rank: 1 }],
                     updatedAt: expect.any(Date),
-                    lastProcessedTime: expect.any(Date),
+                    lastProcessedTime: new Date("2024-01-15T14:00:00Z"),
                 },
                 { upsert: true, new: true }
             );
         });
 
-        it("should use start of day as lastProcessedTime when no cache exists", async () => {
-            (RouletteLeaderboardModel.findOne as jest.Mock).mockReturnValue({
+        it("should skip bets without currency or operatorId", async () => {
+            (RouletteLeaderboardModel.find as jest.Mock).mockReturnValue({
                 lean: jest.fn().mockReturnValue({
-                    exec: jest.fn().mockResolvedValue(null),
-                }),
-            });
-            const mockBets = [{ uid: "user1", betwin: 100, time: new Date("2024-01-15T12:00:00Z") }];
-            (RouletteBets.find as jest.Mock).mockReturnValue({
-                lean: jest.fn().mockReturnValue({
-                    exec: jest.fn().mockResolvedValue(mockBets),
-                }),
-            });
-
-            await accumulator.accumulateIncremental(testDate);
-
-            expect(RouletteBets.find).toHaveBeenCalledWith({
-                paid: true,
-                time: { $gt: startOfDay, $lte: endOfDay },
-            });
-        });
-
-        it("should use cache lastProcessedTime when available", async () => {
-            const lastProcessedTime = new Date("2024-01-15T11:00:00Z");
-            const mockCache = {
-                lastProcessedTime,
-            };
-            (RouletteLeaderboardModel.findOne as jest.Mock).mockReturnValue({
-                lean: jest.fn().mockReturnValue({
-                    exec: jest.fn().mockResolvedValue(mockCache),
-                }),
-            });
-            const mockBets = [{ uid: "user1", betwin: 100, time: new Date("2024-01-15T12:00:00Z") }];
-            (RouletteBets.find as jest.Mock).mockReturnValue({
-                lean: jest.fn().mockReturnValue({
-                    exec: jest.fn().mockResolvedValue(mockBets),
-                }),
-            });
-
-            await accumulator.accumulateIncremental(testDate);
-
-            expect(RouletteBets.find).toHaveBeenCalledWith({
-                paid: true,
-                time: { $gt: lastProcessedTime, $lte: endOfDay },
-            });
-        });
-
-        it("should update lastProcessedTime to the newest bet time", async () => {
-            (RouletteLeaderboardModel.findOne as jest.Mock).mockReturnValue({
-                lean: jest.fn().mockReturnValue({
-                    exec: jest.fn().mockResolvedValue(null),
+                    exec: jest.fn().mockResolvedValue([]),
                 }),
             });
             const mockBets = [
-                { uid: "user1", betwin: 100, time: new Date("2024-01-15T12:00:00Z") },
-                { uid: "user2", betwin: 50, time: new Date("2024-01-15T14:00:00Z") },
-                { uid: "user3", betwin: 75, time: new Date("2024-01-15T13:00:00Z") },
+                { uid: "user1", betwin: 100, time: new Date("2024-01-15T12:00:00Z"), currency: "USD", operatorId: "op1" },
+                { uid: "user2", betwin: 50, time: new Date("2024-01-15T13:00:00Z") }, // Missing currency/operatorId
+                { uid: "user3", betwin: 75, time: new Date("2024-01-15T14:00:00Z"), currency: "EUR", operatorId: "op1" },
             ];
             (RouletteBets.find as jest.Mock).mockReturnValue({
                 lean: jest.fn().mockReturnValue({
@@ -351,25 +344,34 @@ describe("RouletteLeaderboardAccumulator", () => {
 
             await accumulator.accumulateIncremental(testDate);
 
+            expect(RouletteLeaderboardModel.findOneAndUpdate).toHaveBeenCalledTimes(2);
             expect(RouletteLeaderboardModel.findOneAndUpdate).toHaveBeenCalledWith(
-                { date: dateKey },
+                { date: dateKey, currency: "USD", operatorId: "op1" },
                 expect.objectContaining({
-                    lastProcessedTime: new Date("2024-01-15T14:00:00Z"),
+                    leaderboard: [{ uid: "user1", totalWin: 100, rank: 1 }],
+                }),
+                { upsert: true, new: true }
+            );
+            expect(RouletteLeaderboardModel.findOneAndUpdate).toHaveBeenCalledWith(
+                { date: dateKey, currency: "EUR", operatorId: "op1" },
+                expect.objectContaining({
+                    leaderboard: [{ uid: "user3", totalWin: 75, rank: 1 }],
                 }),
                 { upsert: true, new: true }
             );
         });
 
-        it("should sort leaderboard by totalWin in descending order", async () => {
-            (RouletteLeaderboardModel.findOne as jest.Mock).mockReturnValue({
+        it("should handle invalid betwin values", async () => {
+            (RouletteLeaderboardModel.find as jest.Mock).mockReturnValue({
                 lean: jest.fn().mockReturnValue({
-                    exec: jest.fn().mockResolvedValue(null),
+                    exec: jest.fn().mockResolvedValue([]),
                 }),
             });
             const mockBets = [
-                { uid: "user1", betwin: 50, time: new Date("2024-01-15T12:00:00Z") },
-                { uid: "user2", betwin: 100, time: new Date("2024-01-15T13:00:00Z") },
-                { uid: "user3", betwin: 75, time: new Date("2024-01-15T14:00:00Z") },
+                { uid: "user1", betwin: 100, time: new Date("2024-01-15T12:00:00Z"), currency: "USD", operatorId: "op1" },
+                { uid: "user2", betwin: "invalid", time: new Date("2024-01-15T13:00:00Z"), currency: "USD", operatorId: "op1" },
+                { uid: "user3", betwin: NaN, time: new Date("2024-01-15T14:00:00Z"), currency: "USD", operatorId: "op1" },
+                { uid: "user4", betwin: 50, time: new Date("2024-01-15T15:00:00Z"), currency: "USD", operatorId: "op1" },
             ];
             (RouletteBets.find as jest.Mock).mockReturnValue({
                 lean: jest.fn().mockReturnValue({
@@ -380,7 +382,83 @@ describe("RouletteLeaderboardAccumulator", () => {
             await accumulator.accumulateIncremental(testDate);
 
             expect(RouletteLeaderboardModel.findOneAndUpdate).toHaveBeenCalledWith(
-                { date: dateKey },
+                { date: dateKey, currency: "USD", operatorId: "op1" },
+                {
+                    leaderboard: [
+                        { uid: "user1", totalWin: 100, rank: 1 },
+                        { uid: "user4", totalWin: 50, rank: 2 },
+                        { uid: "user2", totalWin: 0, rank: 3 },
+                        { uid: "user3", totalWin: 0, rank: 4 },
+                    ],
+                    updatedAt: expect.any(Date),
+                    lastProcessedTime: new Date("2024-01-15T15:00:00Z"),
+                },
+                { upsert: true, new: true }
+            );
+        });
+
+        it("should only process bets after lastProcessedTime", async () => {
+            const lastProcessedTime = new Date("2024-01-15T11:00:00Z");
+            const existingLeaderboards = [
+                {
+                    currency: "USD",
+                    operatorId: "op1",
+                    lastProcessedTime,
+                    leaderboard: [{ uid: "user1", totalWin: 100, rank: 1 }],
+                },
+            ];
+            (RouletteLeaderboardModel.find as jest.Mock).mockReturnValue({
+                lean: jest.fn().mockReturnValue({
+                    exec: jest.fn().mockResolvedValue(existingLeaderboards),
+                }),
+            });
+            const mockBets = [
+                { uid: "user1", betwin: 50, time: new Date("2024-01-15T10:00:00Z"), currency: "USD", operatorId: "op1" }, // Before lastProcessedTime
+                { uid: "user2", betwin: 75, time: new Date("2024-01-15T12:00:00Z"), currency: "USD", operatorId: "op1" }, // After lastProcessedTime
+            ];
+            (RouletteBets.find as jest.Mock).mockReturnValue({
+                lean: jest.fn().mockReturnValue({
+                    exec: jest.fn().mockResolvedValue(mockBets),
+                }),
+            });
+
+            await accumulator.accumulateIncremental(testDate);
+
+            expect(RouletteLeaderboardModel.findOneAndUpdate).toHaveBeenCalledWith(
+                { date: dateKey, currency: "USD", operatorId: "op1" },
+                {
+                    leaderboard: [
+                        { uid: "user1", totalWin: 100, rank: 1 },
+                        { uid: "user2", totalWin: 75, rank: 2 },
+                    ],
+                    updatedAt: expect.any(Date),
+                    lastProcessedTime: new Date("2024-01-15T12:00:00Z"),
+                },
+                { upsert: true, new: true }
+            );
+        });
+
+        it("should sort leaderboard by totalWin in descending order", async () => {
+            (RouletteLeaderboardModel.find as jest.Mock).mockReturnValue({
+                lean: jest.fn().mockReturnValue({
+                    exec: jest.fn().mockResolvedValue([]),
+                }),
+            });
+            const mockBets = [
+                { uid: "user1", betwin: 50, time: new Date("2024-01-15T12:00:00Z"), currency: "USD", operatorId: "op1" },
+                { uid: "user2", betwin: 100, time: new Date("2024-01-15T13:00:00Z"), currency: "USD", operatorId: "op1" },
+                { uid: "user3", betwin: 75, time: new Date("2024-01-15T14:00:00Z"), currency: "USD", operatorId: "op1" },
+            ];
+            (RouletteBets.find as jest.Mock).mockReturnValue({
+                lean: jest.fn().mockReturnValue({
+                    exec: jest.fn().mockResolvedValue(mockBets),
+                }),
+            });
+
+            await accumulator.accumulateIncremental(testDate);
+
+            expect(RouletteLeaderboardModel.findOneAndUpdate).toHaveBeenCalledWith(
+                { date: dateKey, currency: "USD", operatorId: "op1" },
                 expect.objectContaining({
                     leaderboard: [
                         { uid: "user2", totalWin: 100, rank: 1 },
@@ -392,14 +470,81 @@ describe("RouletteLeaderboardAccumulator", () => {
             );
         });
 
+        it("should update existing leaderboards even when no new bets", async () => {
+            const existingLeaderboards = [
+                {
+                    currency: "USD",
+                    operatorId: "op1",
+                    lastProcessedTime: startOfDay,
+                    leaderboard: [{ uid: "user1", totalWin: 100, rank: 1 }],
+                },
+                {
+                    currency: "EUR",
+                    operatorId: "op1",
+                    lastProcessedTime: startOfDay,
+                    leaderboard: [{ uid: "user2", totalWin: 50, rank: 1 }],
+                },
+            ];
+            (RouletteLeaderboardModel.find as jest.Mock).mockReturnValue({
+                lean: jest.fn().mockReturnValue({
+                    exec: jest.fn().mockResolvedValue(existingLeaderboards),
+                }),
+            });
+            (RouletteBets.find as jest.Mock).mockReturnValue({
+                lean: jest.fn().mockReturnValue({
+                    exec: jest.fn().mockResolvedValue([]),
+                }),
+            });
+
+            await accumulator.accumulateIncremental(testDate);
+
+            expect(RouletteLeaderboardModel.findOneAndUpdate).toHaveBeenCalledTimes(2);
+            expect(RouletteLeaderboardModel.findOneAndUpdate).toHaveBeenCalledWith(
+                { date: dateKey, currency: "USD", operatorId: "op1" },
+                {
+                    leaderboard: [{ uid: "user1", totalWin: 100, rank: 1 }],
+                    updatedAt: expect.any(Date),
+                },
+                { upsert: true }
+            );
+            expect(RouletteLeaderboardModel.findOneAndUpdate).toHaveBeenCalledWith(
+                { date: dateKey, currency: "EUR", operatorId: "op1" },
+                {
+                    leaderboard: [{ uid: "user2", totalWin: 50, rank: 1 }],
+                    updatedAt: expect.any(Date),
+                },
+                { upsert: true }
+            );
+        });
+
         it("should handle database errors gracefully", async () => {
-            (RouletteLeaderboardModel.findOne as jest.Mock).mockReturnValue({
+            (RouletteLeaderboardModel.find as jest.Mock).mockReturnValue({
                 lean: jest.fn().mockReturnValue({
                     exec: jest.fn().mockRejectedValue(new Error("Database error")),
                 }),
             });
 
             await expect(accumulator.accumulateIncremental(testDate)).rejects.toThrow("Database error");
+        });
+
+        it("should query all bets for the day", async () => {
+            (RouletteLeaderboardModel.find as jest.Mock).mockReturnValue({
+                lean: jest.fn().mockReturnValue({
+                    exec: jest.fn().mockResolvedValue([]),
+                }),
+            });
+            (RouletteBets.find as jest.Mock).mockReturnValue({
+                lean: jest.fn().mockReturnValue({
+                    exec: jest.fn().mockResolvedValue([]),
+                }),
+            });
+
+            await accumulator.accumulateIncremental(testDate);
+
+            expect(RouletteBets.find).toHaveBeenCalledWith({
+                paid: true,
+                time: { $gte: startOfDay, $lte: endOfDay },
+            });
         });
     });
 });

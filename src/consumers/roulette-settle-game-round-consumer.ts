@@ -57,9 +57,11 @@ export default class RouletteSettleGameRoundConsumer extends SettleGameRoundCons
         const betResult = this.calculateBetResult(settlementResult, bet, odds);
         bet.betwin = betResult.totalWin;
         bet.paid = true;
-        bet.guaranteedWinStatus = guaranteedFeature?.guaranteedWinStatus;
-        bet.guaranteedLossStatus = guaranteedFeature?.guaranteedLossStatus;
-        bet.accumulatedAmount = guaranteedFeature?.accumulatedAmount;
+        if (guaranteedFeature) {
+            bet.guaranteedWinStatus = guaranteedFeature.guaranteedWinStatus;
+            bet.guaranteedLossStatus = guaranteedFeature.guaranteedLossStatus;
+            bet.accumulatedAmount = guaranteedFeature.accumulatedAmount + betResult.totalWin - (bet.totalAmount || 0);
+        }
 
         const metaData = this.createMetadata({ bet, settlementResult, result });
 

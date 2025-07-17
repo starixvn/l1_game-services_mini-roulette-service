@@ -32,7 +32,7 @@ export default class RouletteHandleActionSettleConsumer {
             },
             {
                 failure:
-                    settleProcessing || betQueue.some((queue: any) => queue.payload && queue.payload.action === Constants.actions.settle),
+                    settleProcessing || betQueue?.some((queue: any) => queue.payload && queue.payload.action === Constants.actions.settle),
                 notice: { errorCode: helpers.noticeHelper.cannotPlaceBet },
             },
         ];

@@ -2,7 +2,7 @@ import { RouletteGameData } from "../roulette-game-data";
 import RouletteGameDefinition from "../roulette-game-definition";
 import { GuaranteedStatus, RouletteBet } from "../types";
 
-export default class RouletteWinFeatureConsumer {
+export default class RouletteRoundResultConsumer {
     declare definition: RouletteGameDefinition;
     declare gameData: RouletteGameData;
     constructor({ definition, gameData }: { definition: RouletteGameDefinition; gameData: RouletteGameData }) {

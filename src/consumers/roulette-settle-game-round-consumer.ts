@@ -133,6 +133,10 @@ export default class RouletteSettleGameRoundConsumer extends SettleGameRoundCons
         return {
             BetDetails: betDetails,
             Result: result.toString(),
+            GuaranteedWinStatus: bet.guaranteedWinStatus || "existed",
+            GuaranteedWinTriggered: !!bet.guaranteedWinStatus,
+            GuaranteedLossStatus: bet.guaranteedLossStatus || "existed",
+            GuaranteedLossTriggered: !!bet.guaranteedLossStatus,
         };
     }
 

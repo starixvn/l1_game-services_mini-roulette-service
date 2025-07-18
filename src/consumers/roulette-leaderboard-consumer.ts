@@ -37,12 +37,25 @@ export default class RouletteLeaderboardConsumer {
         )
             .lean()
             .exec();
+        let currentPlayerSettings: {
+            hideAvatar: boolean;
+            hideName: boolean;
+            avatarUrl: string | null;
+            nickname: string | null;
+        } = {
+            hideAvatar: false,
+            hideName: false,
+            avatarUrl: "",
+            nickname: "",
+        };
+
         if (!leaderboard) {
-            return { leaderboard: [], currentPlayer: { rank: -1, currentPlayerSettings: null, totalWin: 0 }, time: date.toISOString() };
+            const userSettings = await this.langliveUserSettingConsumer.getLangliveUserSettings(uid);
+            currentPlayerSettings = this.formatUserSettings(userSettings);
+            return { leaderboard: [], currentPlayer: { rank: -1, currentPlayerSettings, totalWin: 0 }, time: date.toISOString() };
         }
 
         const slicedLeaderboard = leaderboard.leaderboard.slice(0, top).filter((x) => x.totalWin > 0);
-        let currentPlayerSettings = null;
 
         const enhancedLeaderboard = await Promise.all(
             slicedLeaderboard.map(async (player) => {
@@ -81,7 +94,6 @@ export default class RouletteLeaderboardConsumer {
                 currentPlayerSettings = this.formatUserSettings(userSettings);
             } catch (error) {
                 this.logService.logError(`Error getting user settings for current player ${uid}: ${JSON.stringify(error)}`);
-                currentPlayerSettings = null;
             }
         }
 
@@ -97,20 +109,29 @@ export default class RouletteLeaderboardConsumer {
     }
 
     formatUserSettings(userSettings: {
-        leaderboard: {
-            hideAvatar: boolean;
-            hideName: boolean;
+        leaderboard?: {
+            hideAvatar?: boolean;
+            hideName?: boolean;
         };
-        avatarUrl: string;
-        nickname: string;
+        avatarUrl?: string;
+        nickname?: string;
     }) {
+        if (!userSettings || !userSettings.leaderboard) {
+            return {
+                hideAvatar: false,
+                hideName: false,
+                avatarUrl: userSettings?.avatarUrl || "",
+                nickname: userSettings?.nickname || "",
+            };
+        }
+
         const hideAvatar = Boolean(userSettings.leaderboard.hideAvatar);
         const hideName = Boolean(userSettings.leaderboard.hideName);
         return {
             hideAvatar,
             hideName,
-            avatarUrl: hideAvatar ? null : userSettings.avatarUrl,
-            nickname: hideName ? null : userSettings.nickname,
+            avatarUrl: hideAvatar ? null : userSettings.avatarUrl || "",
+            nickname: hideName ? null : userSettings.nickname || "",
         };
     }
 }

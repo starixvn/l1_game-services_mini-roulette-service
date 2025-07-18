@@ -37,6 +37,11 @@ describe("RouletteLeaderboardConsumer", () => {
                 exec: jest.fn().mockResolvedValue(null),
             }),
         });
+        mockLangliveUserSettingConsumer.getLangliveUserSettings.mockResolvedValue({
+            avatarUrl: "default_avatar",
+            nickname: "default_nick",
+            leaderboard: { hideAvatar: 0, hideName: 0 },
+        });
         const player = {
             UID: "user1",
             session: {

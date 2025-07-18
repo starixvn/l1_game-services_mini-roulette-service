@@ -1,6 +1,6 @@
 import { generateResult, getSettlementResult } from "../../../src/helpers/result-helper";
 
-xdescribe("GenerateResult statistic: 100,000 times", () => {
+describe("GenerateResult statistic: 100,000 times", () => {
     // arrange
     const total = 100_000;
     for (let index = 0; index < 3; index++) {

@@ -7,7 +7,7 @@ module.exports = async () => {
             "^.+\\.js?$": "babel-jest",
         },
         transformIgnorePatterns: [
-            "node_modules/(?!(sc-base-database|sc-common|sc-game-base|sc-base-apis|sc-api-client|jest-auto-fixture|d3-array|internmap|axios|nanoid|crypto-random-string|sc-game-service-integration-utils|sc-game-management-client|prom-client)/.*)",
+            "node_modules/(?!(sc-base-database|sc-common|sc-game-base|sc-base-apis|sc-api-client|jest-auto-fixture|d3-array|internmap|axios|nanoid|crypto-random-string|sc-game-service-integration-utils|sc-game-management-client|prom-client|random-int)/.*)",
         ],
         preset: "ts-jest",
         testEnvironment: "node",

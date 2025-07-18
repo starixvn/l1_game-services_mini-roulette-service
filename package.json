@@ -5,7 +5,7 @@
     "main": "./build/app.js",
     "scripts": {
         "build": "tsc -p tsconfig.build.json",
-        "test": "jest",
+        "test": "jest --testPathPattern=tests/unit-tests/",
         "test-coverage": "jest --collect-coverage --testPathPattern=tests/unit-tests/",
         "integration-test": "npm run build && jest --config ./jest.integration-test.config.cjs --testPathPattern=tests/integration-tests/ --detectOpenHandles --forceExit",
         "dev": "tsx watch ./src/app.ts",

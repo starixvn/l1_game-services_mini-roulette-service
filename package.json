@@ -30,12 +30,12 @@
         "random": "^3.0.3",
         "random-int": "^3.0.0",
         "random-js": "^2.1.0",
-        "sc-game-base": "5.4.0-beta.7",
-        "sc-game-management-client": "0.1.5-beta.1"
+        "sc-game-base": "5.5.0",
+        "sc-game-management-client": "0.1.5"
     },
     "resolutions": {
         "mongoose": "5.13.20",
-        "sc-game-management-client": "0.1.5-beta.1"
+        "sc-game-management-client": "0.1.5"
     },
     "devDependencies": {
         "@babel/preset-env": "^7.23.9",
@@ -45,8 +45,8 @@
         "@types/d3-array": "^3.2.1",
         "@types/jest": "^29.5.12",
         "@types/lodash": "^4.17.16",
-        "@types/sc-common": "1.0.1-beta.0",
-        "@types/sc-game-base": "1.0.0-beta.12",
+        "@types/sc-common": "1.0.2",
+        "@types/sc-game-base": "1.1.0",
         "@types/sc-game-service-integration-utils": "1.0.0",
         "@types/socket.io": "^3.0.2",
         "husky": "^9.1.7",
@@ -57,7 +57,7 @@
         "jest-sonar-reporter": "^2.0.0",
         "nodemon": "^3.0.3",
         "sc-base-database": "^2.2.0",
-        "sc-game-management-client": "0.1.5-beta.1",
+        "sc-game-management-client": "0.1.5",
         "sc-game-service-integration-utils": "^2.1.0",
         "ts-jest": "^29.1.2",
         "tsx": "^4.7.0",

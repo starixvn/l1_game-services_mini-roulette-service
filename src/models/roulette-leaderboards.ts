@@ -29,8 +29,6 @@ const RouletteLeaderboardSchema = new mongoose.Schema<IRouletteLeaderboard>({
     operatorId: { type: String, required: true },
 });
 
-RouletteLeaderboardSchema.index({ date: 1, operatorId: 1, currency: 1 }, { unique: true });
-
 const RouletteLeaderboardModel: mongoose.Model<IRouletteLeaderboard> = mongoose.model<IRouletteLeaderboard>(
     "miniroulette_leaderboards",
     RouletteLeaderboardSchema

@@ -21,6 +21,4 @@ const LangliveUserSettingsSchema = new mongoose.Schema<ILangliveUserSettings>({
     updatedAt: { type: Date, default: Date.now },
 });
 
-LangliveUserSettingsSchema.index({ uid: 1, gameId: 1 }, { unique: true });
-
 export default mongoose.model<ILangliveUserSettings>("langlive_user_settings", LangliveUserSettingsSchema);

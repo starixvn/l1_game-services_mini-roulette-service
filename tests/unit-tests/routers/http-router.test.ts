@@ -30,7 +30,7 @@ jest.mock("sc-game-base", () => ({
 jest.mock("sc-common", () => ({
     utils: {
         authentication: {
-            useAuthenticate: jest.fn(),
+            useAuthenticate: jest.fn().mockReturnValue(() => {}),
         },
     },
 }));
@@ -54,6 +54,8 @@ describe("HttpRouter", () => {
         };
         mockGameData = {
             settlementResultFromAdmin: null,
+            ingame: {},
+            playerBetHistory: {},
         };
         mockHistoryQuery = {};
         mockMetricQuery = {};
@@ -97,10 +99,10 @@ describe("HttpRouter", () => {
     });
 
     describe("init", () => {
-        it("should call parent init method", () => {
-            // Arrange
+        beforeEach(() => {
             Table.Routers.TableHttpRouter.prototype.init = jest.fn();
-
+        });
+        it("should call parent init method", () => {
             // Act
             router.init(mockApp);
 
@@ -122,6 +124,14 @@ describe("HttpRouter", () => {
 
             // Assert
             expect(mockApp.post).toHaveBeenCalledWith("/api/update-leaderboard-settings", expect.any(Function));
+        });
+
+        it("should register /api/void-ticket endpoint", () => {
+            // Act
+            router.init(mockApp);
+
+            // Assert
+            expect(mockApp.post).toHaveBeenCalledWith("/api/void-ticket", expect.any(Function), expect.any(Function));
         });
     });
 
@@ -269,6 +279,75 @@ describe("HttpRouter", () => {
             // Assert
             expect(mockLogService.logError).toHaveBeenCalledWith(error);
             expect(mockRes.send).toHaveBeenCalledWith({ error: true });
+        });
+    });
+
+    describe("handleVoidTicket", () => {
+        let mockReq: any;
+        let mockRes: any;
+        beforeEach(() => {
+            mockReq = {
+                body: {
+                    Name: "playerName",
+                    UserIdentify: "111",
+                    RoundId: 123,
+                },
+            };
+            mockRes = {
+                send: jest.fn(),
+            };
+        });
+        describe("when invalid request", () => {
+            it("should send false when Name is missing", async () => {
+                // Arrange
+                mockReq.body.Name = "";
+
+                // Act
+                await router.handleVoidTicket(mockReq, mockRes);
+
+                // Assert
+                expect(mockRes.send).toHaveBeenCalledWith(false);
+                expect(mockLogService.logError).toHaveBeenCalledWith("Void ticket request is missing required parameters");
+            });
+
+            it("should send false when RoundId is 0", async () => {
+                // Arrange
+                mockReq.body.RoundId = 0;
+
+                // Act
+                await router.handleVoidTicket(mockReq, mockRes);
+
+                // Assert
+                expect(mockRes.send).toHaveBeenCalledWith(false);
+                expect(mockLogService.logError).toHaveBeenCalledWith("Void ticket request is missing required parameters");
+            });
+        });
+
+        describe("when running round", () => {
+            it("should delete player bet and send true", async () => {
+                // Arrange
+                mockGameData.ingame["playerName"] = { roundId: 123 };
+
+                // Act
+                await router.handleVoidTicket(mockReq, mockRes);
+
+                // Assert
+                expect(mockGameData.ingame["playerName"]).toBeUndefined();
+                expect(mockLogService.logError).toHaveBeenCalledWith('Void running ticket from api call for "playerName"');
+                expect(mockPublisher.publishToUser).toHaveBeenCalledWith("111", { toLobby: true });
+                expect(mockRes.send).toHaveBeenCalledWith(true);
+            });
+        });
+        it("should not delete player bet and send true", async () => {
+            // Arrange
+            mockGameData.playerBetHistory["111"] = [{ roundId: 123 }, { roundId: 122 }];
+
+            // Act
+            await router.handleVoidTicket(mockReq, mockRes);
+
+            // Assert
+            expect(mockGameData.playerBetHistory["111"]).toEqual([{ roundId: 122 }]);
+            expect(mockRes.send).toHaveBeenCalledWith(true);
         });
     });
 });

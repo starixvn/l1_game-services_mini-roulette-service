@@ -59,7 +59,9 @@ const isWinningNumber = (number: number, betType: string, choice: string) => {
             }
             return false;
         case betTypes.oddEven:
-            if (number === 0) return false;
+            if (number === 0) {
+                return false;
+            }
             if (choice === "odd") {
                 return number % 2 === 1;
             }

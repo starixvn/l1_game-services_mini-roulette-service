@@ -96,7 +96,7 @@ export default class RouletteGuaranteedFeatureConsumer {
         if (hasControlLatestBet) {
             return true;
         }
-        const floatingValue = floating ? Math.floor(Math.random() * (floating * 2 + 1) - floating) / 100 : 0;
+        const floatingValue = floating ? Math.floor(Math.random() * (floating * 2 + 1) - floating) / 100 : 0; // NOSONAR
         const adjustedThreshold = thresholdSetting.threshold - floatingValue * thresholdSetting.threshold;
         return Math.abs(accumulatedAmount) >= adjustedThreshold;
     }

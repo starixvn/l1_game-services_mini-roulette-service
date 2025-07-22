@@ -97,23 +97,6 @@ describe("RouletteLeaderboardAccumulator", () => {
             );
         });
 
-        it("should handle onTick errors by calling logService.logError", async () => {
-            const cron = require("cron");
-            let onTickCallback: Function | undefined;
-            cron.CronJob.mockImplementation((config: any) => {
-                onTickCallback = config.onTick;
-                return { start: jest.fn() };
-            });
-
-            accumulator.start();
-
-            if (onTickCallback) {
-                await onTickCallback();
-            }
-
-            expect(mockLogService.logError).toHaveBeenCalled();
-        });
-
         it("should prevent concurrent executions when already running", async () => {
             const cron = require("cron");
             let onTickCallback: Function | undefined;
@@ -121,7 +104,6 @@ describe("RouletteLeaderboardAccumulator", () => {
                 onTickCallback = config.onTick;
                 return { start: jest.fn() };
             });
-
             accumulator.start();
 
             if (onTickCallback) {

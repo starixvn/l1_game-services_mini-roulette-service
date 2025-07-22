@@ -50,7 +50,7 @@ export const getBetChoicesGroupByTypes = (): Record<string, string[]> => {
     }, {});
 
     return Object.entries(draftResult).reduce((sortedResult: Record<string, string[]>, [type, choices]) => {
-        sortedResult[type] = Array.from(new Set(choices)).sort();
+        sortedResult[type] = Array.from(new Set(choices));
 
         return sortedResult;
     }, {});

@@ -142,7 +142,7 @@ describe("ChoiceHelper", () => {
     describe("getBetChoicesGroupByTypes", () => {
         it("should return expected", () => {
             // Arrange
-            const straightUp = Array.from({ length: 37 }, (_, i) => i.toString()).sort();
+            const straightUp = Array.from({ length: 37 }, (_, i) => i.toString());
 
             // Act
             const result = getBetChoicesGroupByTypes();
@@ -151,8 +151,8 @@ describe("ChoiceHelper", () => {
             expect(Object.keys(result)).toEqual(["straightUp", "dozen", "redBlack", "oddEven"]);
             expect(result.straightUp).toEqual(straightUp);
             expect(result.dozen).toEqual(["1", "2", "3"]);
-            expect(result.redBlack).toEqual(["black", "red"]);
-            expect(result.oddEven).toEqual(["even", "odd"]);
+            expect(result.redBlack).toEqual(["red", "black"]);
+            expect(result.oddEven).toEqual(["odd", "even"]);
         });
     });
 

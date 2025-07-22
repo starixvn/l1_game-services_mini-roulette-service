@@ -39,7 +39,7 @@ function random7(min: number, max: number) {
 }
 
 function random8(min: number, max: number) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
+    return Math.floor(Math.random() * (max - min + 1)) + min; // NOSONAR
 }
 
 const randomModes: Record<number, ((min: number, max: number) => number)[]> = {

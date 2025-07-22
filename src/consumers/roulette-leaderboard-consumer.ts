@@ -25,8 +25,7 @@ export default class RouletteLeaderboardConsumer {
     async consume(player: any, payload: { top: number } = { top: 30 }) {
         const { session, UID } = player;
         const { currencyName, operatorId } = session;
-        const leaderboard = await this.getLeaderboardByDay(new Date(), UID, payload.top, currencyName, operatorId);
-        return leaderboard;
+        return this.getLeaderboardByDay(new Date(), UID, payload.top, currencyName, operatorId);
     }
 
     async getLeaderboardByDay(date: Date, uid: string, top: number, currency: string, operatorId: string) {

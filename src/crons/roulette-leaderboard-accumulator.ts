@@ -11,7 +11,7 @@ export default class RouletteLeaderboardAccumulator {
 
     langliveUserSettingConsumer: LangliveUserSettingConsumer;
 
-    private isRunning: boolean = false;
+    private isRunning = false;
 
     constructor({
         definition,

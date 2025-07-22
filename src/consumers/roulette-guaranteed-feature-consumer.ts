@@ -111,6 +111,6 @@ export default class RouletteGuaranteedFeatureConsumer {
     }
 
     private getPlayerLatestBet(uid: string) {
-        return this.gameData.playerBetHistory?.[uid]?.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())?.[0];
+        return this.gameData.playerBetHistory?.[uid]?.toSorted((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())?.[0];
     }
 }

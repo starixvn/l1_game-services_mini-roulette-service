@@ -56,9 +56,10 @@ export default class HttpRouter extends Table.Routers.TableHttpRouter {
     async handleUpdateLeaderboardSettings(req: Request, res: Response, userSession: any) {
         try {
             const { hideAvatar, hideName } = req.body;
-            if (hideAvatar != undefined && hideName != undefined) {
+            if (hideAvatar !== undefined && hideName !== undefined) {
                 this.langliveUserSettingConsumer.updateLeaderboardSettings(userSession.userId, { hideAvatar, hideName });
                 res.send({ success: true });
+                return;
             }
             res.send({ success: false });
         } catch (error) {

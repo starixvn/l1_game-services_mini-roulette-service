@@ -29,9 +29,5 @@ const RouletteLeaderboardSchema = new mongoose.Schema<IRouletteLeaderboard>({
     operatorId: { type: String, required: true },
 });
 
-const RouletteLeaderboardModel: mongoose.Model<IRouletteLeaderboard> = mongoose.model<IRouletteLeaderboard>(
-    "miniroulette_leaderboards",
-    RouletteLeaderboardSchema
-);
-
-export default RouletteLeaderboardModel;
+const modelName = "miniroulette_leaderboards";
+export default mongoose.model<IRouletteLeaderboard>(modelName, RouletteLeaderboardSchema);

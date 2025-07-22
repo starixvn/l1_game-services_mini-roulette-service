@@ -20,7 +20,9 @@ const extractBetTypes = (bet: RouletteBet) => {
     const { betTypes } = Constants;
 
     const processBetType = (betType: string, betData: Record<string, number> | undefined) => {
-        if (!betData) return [];
+        if (!betData) {
+            return [];
+        }
 
         return Object.entries(betData).map(([choice, amount]) => ({
             betType,
@@ -49,13 +51,21 @@ const isWinningNumber = (number: number, betType: string, choice: string) => {
             return number >= start && number < start + 12;
         }
         case betTypes.redBlack:
-            if (choice === "red") return numberWheel.red.includes(number);
-            if (choice === "black") return numberWheel.black.includes(number);
+            if (choice === "red") {
+                return numberWheel.red.includes(number);
+            }
+            if (choice === "black") {
+                return numberWheel.black.includes(number);
+            }
             return false;
         case betTypes.oddEven:
             if (number === 0) return false;
-            if (choice === "odd") return number % 2 === 1;
-            if (choice === "even") return number % 2 === 0;
+            if (choice === "odd") {
+                return number % 2 === 1;
+            }
+            if (choice === "even") {
+                return number % 2 === 0;
+            }
             return false;
         default:
             return false;

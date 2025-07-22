@@ -17,6 +17,5 @@ export const getStartDate = (totalDays: number, gmt = 8) => {
 
 export const convertToGMTDate = (date: Date, gmt = 8) => {
     const totalOffset = getTotalOffset(date, gmt);
-    const localDate = new Date(date.getTime() + totalOffset * MILLISECONDS_PER_MINUTE);
-    return localDate;
+    return new Date(date.getTime() + totalOffset * MILLISECONDS_PER_MINUTE);
 };

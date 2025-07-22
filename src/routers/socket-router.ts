@@ -88,7 +88,7 @@ export default class SocketRouter extends Core.Routers.BaseSocketRouter {
             if (!this.verify()) {
                 return;
             }
-            if (payload.hideAvatar != undefined && payload.hideName != undefined) {
+            if (payload.hideAvatar !== undefined && payload.hideName !== undefined) {
                 this.langliveUserSettingConsumer.updateLeaderboardSettings(this.gameData.realPlayers[this.socketClient.id].UID, payload);
             }
         } catch (error) {

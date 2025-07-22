@@ -7058,10 +7058,10 @@ sc-instrument-helper@1.0.0:
     socket.io "^4.1.2"
     socket.io-msgpack-parser "^3.0.1"
 
-sc-instrument@1.1.1-beta.2:
-  version "1.1.1-beta.2"
-  resolved "https://npm.lumigame.com/sc-instrument/-/sc-instrument-1.1.1-beta.2.tgz"
-  integrity sha512-Z6nJH7SU6ElkTSgSjlzD3NjmPxBQxgXdRyFchMz0S4yj1vNbtvwXrwX9hPWMtM9TQ7Dgab9yUC5+wr4DgSpHYw==
+sc-instrument@1.1.1, sc-instrument@1.1.1-beta.2:
+  version "1.1.1"
+  resolved "https://npm.lumigame.com/sc-instrument/-/sc-instrument-1.1.1.tgz#56242cdc7b8999450f0796021f1144e24e046701"
+  integrity sha512-O82cMim5iDkBvnH7ZdeWkGjYt4HMWIbpHiE8vXqlIasQuQZgvsV1k805UqmbxmrD/rhHHp+TN6+9N9wtCMaovQ==
   dependencies:
     "@opentelemetry/context-async-hooks" "1.15.2"
     "@opentelemetry/core" "1.15.2"

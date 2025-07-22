@@ -112,7 +112,9 @@ export default class RouletteSettleGameRoundConsumer extends SettleGameRoundCons
 
         betTypes.forEach((betType) => {
             const betChoices = bet[betType as keyof RouletteBet] as Record<string, number> | undefined;
-            if (!betChoices) return;
+            if (!betChoices) {
+                return;
+            }
 
             const oddsOfType = odds?.[betType] ?? 0;
 

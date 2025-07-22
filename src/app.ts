@@ -10,7 +10,7 @@ startTrace(
     gameSettings.name
 );
 
-import { ResultHelper, ChoiceHelper, ResultControlHelper } from "./helpers";
+import { ResultHelper, ResultControlHelper } from "./helpers";
 import RouletteContainerRegistry from "./roulette-container-registry";
 import { RouletteGameData } from "./roulette-game-data";
 import RouletteGameDefinition from "./roulette-game-definition";

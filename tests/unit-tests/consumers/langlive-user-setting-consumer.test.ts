@@ -16,7 +16,7 @@ jest.mock("../../../src/models", () => ({
         find: mockFind,
         create: mockCreate,
         updateOne: jest.fn().mockReturnValue({
-            exec: jest.fn().mockResolvedValue({ upserted: false }),
+            exec: jest.fn().mockResolvedValue({ upsertedCount: 0 }),
         }),
     },
 }));
@@ -90,7 +90,7 @@ describe("LangliveUserSettingConsumer", () => {
 
     describe("updateImageAndNickname", () => {
         it("should call updateOne with correct params", async () => {
-            const mockExec = jest.fn().mockResolvedValue({ upserted: false });
+            const mockExec = jest.fn().mockResolvedValue({ upsertedCount: 0 });
             const mockUpdateOneWithExec = jest.fn().mockReturnValue({ exec: mockExec });
             const originalUpdateOne = require("../../../src/models").LangliveUserSettingsModel.updateOne;
             require("../../../src/models").LangliveUserSettingsModel.updateOne = mockUpdateOneWithExec;
@@ -106,8 +106,8 @@ describe("LangliveUserSettingConsumer", () => {
             require("../../../src/models").LangliveUserSettingsModel.updateOne = originalUpdateOne;
         });
 
-        it("should call updateOne 2 times if upserted is true", async () => {
-            const mockExec = jest.fn().mockResolvedValue({ upserted: true });
+        it("should call updateOne 2 times if upsertedCount > 0", async () => {
+            const mockExec = jest.fn().mockResolvedValue({ upsertedCount: 1 });
             const mockUpdateOneWithExec = jest.fn().mockReturnValue({ exec: mockExec });
             const originalUpdateOne = require("../../../src/models").LangliveUserSettingsModel.updateOne;
             require("../../../src/models").LangliveUserSettingsModel.updateOne = mockUpdateOneWithExec;

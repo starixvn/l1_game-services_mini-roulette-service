@@ -110,7 +110,7 @@ export default class RouletteLeaderboardAccumulator {
             const key = `${bet.currency}:${bet.operatorId}`;
             const lastProcessedTime = leaderboardMap.get(key)?.lastProcessedTime || start;
 
-            if (bet.time > lastProcessedTime) {
+            if (bet.time && bet.time > lastProcessedTime) {
                 if (!betsByCurrencyOperator.has(key)) {
                     betsByCurrencyOperator.set(key, {
                         currency: bet.currency,

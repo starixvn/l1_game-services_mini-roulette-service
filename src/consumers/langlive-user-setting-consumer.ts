@@ -37,7 +37,7 @@ export default class LangliveUserSettingConsumer {
             { upsert: true }
         ).exec();
 
-        if (userSetting.upserted) {
+        if (userSetting.upsertedCount > 0) {
             const defaultSettings = await this.getDefaultLeaderboardSettings(uid);
             await LangliveUserSettingsModel.updateOne(
                 { uid, gameId: this.definition.id },

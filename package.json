@@ -28,7 +28,7 @@
         "express": "^4.17.1",
         "extensionless": "1.9.6",
         "lodash": "^4.17.19",
-        "mongoose": "5.13.20",
+        "mongoose": "6.13.6",
         "random": "^3.0.3",
         "random-int": "^3.0.0",
         "random-js": "^2.1.0",

@@ -44,7 +44,7 @@ export default class RouletteSettleGameRoundConsumer extends SettleGameRoundCons
         delete this.gameData.ingame[playerName];
     }
 
-    async settleBet(bet: mongoose.Document<RouletteBet> & RouletteBet) {
+    async settleBet(bet: mongoose.Document<unknown, any, RouletteBet> & RouletteBet) {
         const guaranteedFeature = await this.guaranteedFeatureConsumer.calculateGuaranteedFeatureStatus(bet);
         const round = await this.findOrCreateRound(bet, guaranteedFeature);
         if (!round) {

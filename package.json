@@ -37,7 +37,9 @@
         "sc-instrument": "1.1.1"
     },
     "resolutions": {
-        "mongoose": "5.13.20",
+        "mongoose": "6.13.6",
+        "form-data": "4.0.4",
+        "sc-common": "2.0.0",
         "sc-game-management-client": "0.1.5",
         "sc-instrument": "1.1.1"
     },

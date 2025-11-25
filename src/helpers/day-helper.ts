@@ -19,3 +19,26 @@ export const convertToGMTDate = (date: Date, gmt = 8) => {
     const totalOffset = getTotalOffset(date, gmt);
     return new Date(date.getTime() + totalOffset * MILLISECONDS_PER_MINUTE);
 };
+
+
+export const getWeekRange = (date: Date, gmt = 8) => {
+    const totalOffset = getTotalOffset(date, gmt);
+    const gmtDate = new Date(date.getTime() + totalOffset * MILLISECONDS_PER_MINUTE);
+
+    const dayOfWeek = gmtDate.getDay();
+
+    const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    
+    const weekStart = new Date(gmtDate);
+    weekStart.setDate(gmtDate.getDate() - daysToMonday);
+    weekStart.setHours(0, 0, 0, 0);
+  
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+    weekEnd.setHours(23, 59, 59, 999);
+    
+    const start = new Date(weekStart.getTime() - totalOffset * MILLISECONDS_PER_MINUTE);
+    const end = new Date(weekEnd.getTime() - totalOffset * MILLISECONDS_PER_MINUTE);
+    
+    return { start, end };
+};

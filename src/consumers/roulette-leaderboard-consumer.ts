@@ -2,6 +2,7 @@ import { logger } from "sc-common";
 import { RouletteLeaderboardModel } from "../models";
 import { RouletteGameData } from "../roulette-game-data";
 import LangliveUserSettingConsumer from "./langlive-user-setting-consumer";
+import { getWeekRange, convertToGMTDate } from "../helpers/day-helper";
 
 export default class RouletteLeaderboardConsumer {
     gameData: RouletteGameData;
@@ -25,13 +26,21 @@ export default class RouletteLeaderboardConsumer {
     async consume(player: any, payload: { top: number } = { top: 30 }) {
         const { session, UID } = player;
         const { currencyName, operatorId } = session;
-        return this.getLeaderboardByDay(new Date(), UID, payload.top, currencyName, operatorId);
+        const { start, end } = getWeekRange(new Date());
+        return this.getLeaderboardByWeekRange(start, end, UID, payload.top, currencyName, operatorId);
     }
 
-    async getLeaderboardByDay(date: Date, uid: string, top: number, currency: string, operatorId: string) {
-        const key = date.toISOString().split("T")[0];
-        const leaderboard = await RouletteLeaderboardModel.findOne(
-            { date: key, currency: currency, operatorId },
+    async getLeaderboardByWeekRange(start: Date, end: Date, uid: string, top: number, currency: string, operatorId: string) {
+        const dateKeys: string[] = [];
+        const currentDate = new Date(start);
+        while (currentDate <= end) {
+            const gmt8Date = convertToGMTDate(currentDate, 8);
+            dateKeys.push(gmt8Date.toISOString().split("T")[0]);
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+
+        const leaderboards = await RouletteLeaderboardModel.find(
+            { date: { $in: dateKeys }, currency: currency, operatorId },
             { _id: 0, __v: 0, "leaderboard._id": 0 }
         )
             .lean()
@@ -48,13 +57,45 @@ export default class RouletteLeaderboardConsumer {
             nickname: "",
         };
 
-        if (!leaderboard) {
+        if (!leaderboards || leaderboards.length === 0) {
             const userSettings = await this.langliveUserSettingConsumer.getLangliveUserSettings(uid);
             currentPlayerSettings = this.formatUserSettings(userSettings);
-            return { leaderboard: [], currentPlayer: { rank: -1, currentPlayerSettings, totalWin: 0 }, time: date.toISOString() };
+            return { 
+                leaderboard: [], 
+                currentPlayer: { rank: -1, currentPlayerSettings, totalWin: 0 }, 
+                time: new Date().toISOString(),
+                timeRange: {
+                    start: start.toISOString(),
+                    end: end.toISOString(),
+                },
+            };
         }
 
-        const slicedLeaderboard = leaderboard.leaderboard.slice(0, top).filter((x) => x.totalWin > 0);
+        const playerWinMap = new Map<string, { uid: string; totalWin: number }>();
+        
+        leaderboards.forEach((dailyLeaderboard) => {
+            dailyLeaderboard.leaderboard.forEach((player) => {
+                if (player.totalWin > 0) {
+                    const existing = playerWinMap.get(player.uid);
+                    if (existing) {
+                        existing.totalWin += player.totalWin;
+                    } else {
+                        playerWinMap.set(player.uid, {
+                            uid: player.uid,
+                            totalWin: player.totalWin,
+                        });
+                    }
+                }
+            });
+        });
+
+        const mergedLeaderboard = Array.from(playerWinMap.values()).sort((a, b) => b.totalWin - a.totalWin);
+        const rankedLeaderboard = mergedLeaderboard.map((player, index) => ({
+            ...player,
+            rank: index + 1,
+        }));
+
+        const slicedLeaderboard = rankedLeaderboard.slice(0, top).filter((x) => x.totalWin > 0);
 
         const enhancedLeaderboard = await Promise.all(
             slicedLeaderboard.map(async (player) => {
@@ -85,7 +126,7 @@ export default class RouletteLeaderboardConsumer {
             })
         );
 
-        const player = leaderboard.leaderboard.find((x) => x.uid === uid);
+        const player = rankedLeaderboard.find((x) => x.uid === uid);
 
         if (currentPlayerSettings == null) {
             try {
@@ -103,7 +144,11 @@ export default class RouletteLeaderboardConsumer {
                 currentPlayerSettings,
                 totalWin: player?.totalWin || 0,
             },
-            time: leaderboard.updatedAt.toISOString(),
+            time: new Date().toISOString(),
+            timeRange: {
+                start: start.toISOString(),
+                end: end.toISOString(),
+            },
         };
     }
 

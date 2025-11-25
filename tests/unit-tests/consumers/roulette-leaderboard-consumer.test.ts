@@ -3,11 +3,32 @@ import { RouletteGameData } from "../../../src/roulette-game-data";
 
 jest.mock("../../../src/models", () => ({
     RouletteLeaderboardModel: {
-        findOne: jest.fn(),
+        find: jest.fn(),
     },
 }));
 
 const { RouletteLeaderboardModel } = require("../../../src/models");
+
+const mockFindLeanExec = (result: any) => {
+    (RouletteLeaderboardModel.find as jest.Mock).mockReturnValue({
+        lean: jest.fn().mockReturnValue({
+            exec: jest.fn().mockResolvedValue(result),
+        }),
+    });
+};
+
+const expectLeaderboardFindCall = () => {
+    expect(RouletteLeaderboardModel.find).toHaveBeenCalledWith(
+        expect.objectContaining({
+            date: expect.objectContaining({
+                $in: expect.any(Array),
+            }),
+            currency: "USD",
+            operatorId: "test-operator",
+        }),
+        { _id: 0, __v: 0, "leaderboard._id": 0 }
+    );
+};
 
 describe("RouletteLeaderboardConsumer", () => {
     let consumer: RouletteLeaderboardConsumer;
@@ -32,11 +53,7 @@ describe("RouletteLeaderboardConsumer", () => {
     });
 
     it("should return default values if no leaderboard found", async () => {
-        (RouletteLeaderboardModel.findOne as jest.Mock).mockReturnValue({
-            lean: jest.fn().mockReturnValueOnce({
-                exec: jest.fn().mockResolvedValue(null),
-            }),
-        });
+        mockFindLeanExec([]);
         mockLangliveUserSettingConsumer.getLangliveUserSettings.mockResolvedValue({
             avatarUrl: "default_avatar",
             nickname: "default_nick",
@@ -52,10 +69,7 @@ describe("RouletteLeaderboardConsumer", () => {
 
         const result = await consumer.consume(player, { top: 10 });
 
-        expect(RouletteLeaderboardModel.findOne).toHaveBeenCalledWith(
-            { date: expect.any(String), currency: "USD", operatorId: "test-operator" },
-            { _id: 0, __v: 0, "leaderboard._id": 0 }
-        );
+        expectLeaderboardFindCall();
         expect(result.leaderboard).toEqual([]);
         expect(result.currentPlayer.rank).toBe(-1);
     });
@@ -68,11 +82,7 @@ describe("RouletteLeaderboardConsumer", () => {
             ],
             updatedAt: new Date(),
         };
-        (RouletteLeaderboardModel.findOne as jest.Mock).mockReturnValue({
-            lean: jest.fn().mockReturnValueOnce({
-                exec: jest.fn().mockResolvedValue(leaderboardDoc),
-            }),
-        });
+        mockFindLeanExec([leaderboardDoc]);
         mockLangliveUserSettingConsumer.getLangliveUserSettings.mockResolvedValue(
             new Promise((resolve) =>
                 resolve({
@@ -92,10 +102,7 @@ describe("RouletteLeaderboardConsumer", () => {
 
         const result = await consumer.consume(player, { top: 2 });
 
-        expect(RouletteLeaderboardModel.findOne).toHaveBeenCalledWith(
-            { date: expect.any(String), currency: "USD", operatorId: "test-operator" },
-            { _id: 0, __v: 0, "leaderboard._id": 0 }
-        );
+        expectLeaderboardFindCall();
         expect(result.leaderboard[0].avatarUrl).toBe("avatar_user1");
         expect(result.leaderboard[0].nickname).toBe("nick_user1");
     });
@@ -105,11 +112,7 @@ describe("RouletteLeaderboardConsumer", () => {
             leaderboard: [{ uid: "user1", totalWin: 100, rank: 1 }],
             updatedAt: new Date(),
         };
-        (RouletteLeaderboardModel.findOne as jest.Mock).mockReturnValue({
-            lean: jest.fn().mockReturnValueOnce({
-                exec: jest.fn().mockResolvedValue(leaderboardDoc),
-            }),
-        });
+        mockFindLeanExec([leaderboardDoc]);
         mockLangliveUserSettingConsumer.getLangliveUserSettings.mockResolvedValue({
             avatarUrl: "avatar_user1",
             nickname: "nick_user1",
@@ -125,10 +128,7 @@ describe("RouletteLeaderboardConsumer", () => {
 
         const result = await consumer.consume(player, { top: 1 });
 
-        expect(RouletteLeaderboardModel.findOne).toHaveBeenCalledWith(
-            { date: expect.any(String), currency: "USD", operatorId: "test-operator" },
-            { _id: 0, __v: 0, "leaderboard._id": 0 }
-        );
+        expectLeaderboardFindCall();
         expect(result.leaderboard[0].avatarUrl).toBeNull();
         expect(result.leaderboard[0].nickname).toBeNull();
     });
@@ -138,11 +138,7 @@ describe("RouletteLeaderboardConsumer", () => {
             leaderboard: [{ uid: "user1", totalWin: 100, rank: 1 }],
             updatedAt: new Date(),
         };
-        (RouletteLeaderboardModel.findOne as jest.Mock).mockReturnValue({
-            lean: jest.fn().mockReturnValueOnce({
-                exec: jest.fn().mockResolvedValue(leaderboardDoc),
-            }),
-        });
+        mockFindLeanExec([leaderboardDoc]);
         mockLangliveUserSettingConsumer.getLangliveUserSettings.mockRejectedValue(new Error("fail"));
         const player = {
             UID: "user1",
@@ -154,10 +150,7 @@ describe("RouletteLeaderboardConsumer", () => {
 
         const result = await consumer.consume(player, { top: 1 });
 
-        expect(RouletteLeaderboardModel.findOne).toHaveBeenCalledWith(
-            { date: expect.any(String), currency: "USD", operatorId: "test-operator" },
-            { _id: 0, __v: 0, "leaderboard._id": 0 }
-        );
+        expectLeaderboardFindCall();
         expect(result.leaderboard[0].avatarUrl).toBe("");
         expect(result.leaderboard[0].nickname).toBe("");
     });
@@ -170,11 +163,7 @@ describe("RouletteLeaderboardConsumer", () => {
             ],
             updatedAt: new Date(),
         };
-        (RouletteLeaderboardModel.findOne as jest.Mock).mockReturnValue({
-            lean: jest.fn().mockReturnValueOnce({
-                exec: jest.fn().mockResolvedValue(leaderboardDoc),
-            }),
-        });
+        mockFindLeanExec([leaderboardDoc]);
         mockLangliveUserSettingConsumer.getLangliveUserSettings.mockResolvedValue({
             avatarUrl: "avatar_user1",
             nickname: "nick_user1",
@@ -190,10 +179,7 @@ describe("RouletteLeaderboardConsumer", () => {
 
         const result = await consumer.consume(player, { top: 1 });
 
-        expect(RouletteLeaderboardModel.findOne).toHaveBeenCalledWith(
-            { date: expect.any(String), currency: "USD", operatorId: "test-operator" },
-            { _id: 0, __v: 0, "leaderboard._id": 0 }
-        );
+        expectLeaderboardFindCall();
         expect(result.currentPlayer).toMatchObject({
             rank: 1,
             currentPlayerSettings: {
@@ -215,11 +201,7 @@ describe("RouletteLeaderboardConsumer", () => {
             ],
             updatedAt: new Date(),
         };
-        (RouletteLeaderboardModel.findOne as jest.Mock).mockReturnValue({
-            lean: jest.fn().mockReturnValueOnce({
-                exec: jest.fn().mockResolvedValue(leaderboardDoc),
-            }),
-        });
+        mockFindLeanExec([leaderboardDoc]);
         mockLangliveUserSettingConsumer.getLangliveUserSettings.mockResolvedValue({
             avatarUrl: "avatar",
             nickname: "nick",
@@ -235,10 +217,7 @@ describe("RouletteLeaderboardConsumer", () => {
 
         const result = await consumer.consume(player, { top: 4 });
 
-        expect(RouletteLeaderboardModel.findOne).toHaveBeenCalledWith(
-            { date: expect.any(String), currency: "USD", operatorId: "test-operator" },
-            { _id: 0, __v: 0, "leaderboard._id": 0 }
-        );
+        expectLeaderboardFindCall();
         expect(result.leaderboard.length).toBe(3);
     });
 });

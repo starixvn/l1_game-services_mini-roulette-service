@@ -41,7 +41,7 @@ export default {
         },
     },
     sentry: {
-        sentryUrl: "http://8eb9632f2663e57c838ec83febbee14f@sentryuat-sc.nebula.prod/4",
+        sentryUrl: "http://8eb9632f2663e57c838ec83febbee14f@sentrysc.ops-sit.nebula.sit/4",
         logIdentifier: "mini-roulette",
         env: "SIT_1",
     },

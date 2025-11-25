@@ -41,7 +41,7 @@ export default {
         },
     },
     sentry: {
-        sentryUrl: "http://50e405ebce7003a0e1edbda2bf28b14c@sentryuat-sc.nebula.prod/3",
+        sentryUrl: "http://50e405ebce7003a0e1edbda2bf28b14c@sentrysc.ops-kluat.gamora.prod/3",
         logIdentifier: "mini-roulette",
         env: "UAT",
     },

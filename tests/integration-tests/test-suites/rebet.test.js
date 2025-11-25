@@ -41,6 +41,7 @@ describe("rebet", () => {
         await client.handleGameEvent((data) => data.endBet);
         await client.handleGameEvent((data) => data.endBet);
         const dataPlaceBet = await client.handleGameEvent((data) => data.endBet);
+        client.emit("settle", {});
 
         // Act
         const dataFinish = await client.handleGameEvent((data) => data.finish);

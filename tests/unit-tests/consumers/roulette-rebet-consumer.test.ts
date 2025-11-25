@@ -1,5 +1,4 @@
 import RouletteRebetConsumer from "../../../src/consumers/roulette-rebet-consumer";
-import { PlaceBetConsumer, HandleActionSettleConsumer } from "../../../src/consumers";
 
 // Mock the consumer dependencies
 jest.mock("../../../src/consumers", () => ({
@@ -10,19 +9,14 @@ jest.mock("../../../src/consumers", () => ({
 describe("RouletteRebetConsumer", () => {
     let consumer: RouletteRebetConsumer;
     let mockPlaceBetConsumer: any;
-    let mockHandleActionSettleConsumer: any;
 
     beforeEach(() => {
         mockPlaceBetConsumer = {
             consume: jest.fn(),
         };
-        mockHandleActionSettleConsumer = {
-            consume: jest.fn(),
-        };
 
         consumer = new RouletteRebetConsumer({
             placeBetConsumer: mockPlaceBetConsumer,
-            handleActionSettleConsumer: mockHandleActionSettleConsumer,
         });
     });
 
@@ -30,7 +24,6 @@ describe("RouletteRebetConsumer", () => {
         it("should initialize with all required dependencies", () => {
             // Assert
             expect(consumer.placeBetConsumer).toBe(mockPlaceBetConsumer);
-            expect(consumer.handleActionSettleConsumer).toBe(mockHandleActionSettleConsumer);
         });
     });
 
@@ -45,7 +38,6 @@ describe("RouletteRebetConsumer", () => {
 
             // Assert
             expect(mockPlaceBetConsumer.consume).not.toHaveBeenCalled();
-            expect(mockHandleActionSettleConsumer.consume).not.toHaveBeenCalled();
         });
 
         it("should return early when payload is undefined", () => {
@@ -58,7 +50,6 @@ describe("RouletteRebetConsumer", () => {
 
             // Assert
             expect(mockPlaceBetConsumer.consume).not.toHaveBeenCalled();
-            expect(mockHandleActionSettleConsumer.consume).not.toHaveBeenCalled();
         });
 
         it("should return early when betChoices is missing", () => {
@@ -71,7 +62,6 @@ describe("RouletteRebetConsumer", () => {
 
             // Assert
             expect(mockPlaceBetConsumer.consume).not.toHaveBeenCalled();
-            expect(mockHandleActionSettleConsumer.consume).not.toHaveBeenCalled();
         });
 
         it("should process single bet choice correctly", () => {
@@ -93,7 +83,6 @@ describe("RouletteRebetConsumer", () => {
                 freeBet: false,
                 receivedTime: expect.any(Date),
             });
-            expect(mockHandleActionSettleConsumer.consume).toHaveBeenCalledWith(player);
         });
 
         it("should process multiple bet choices correctly", () => {
@@ -126,7 +115,6 @@ describe("RouletteRebetConsumer", () => {
                 freeBet: false,
                 receivedTime: expect.any(Date),
             });
-            expect(mockHandleActionSettleConsumer.consume).toHaveBeenCalledWith(player);
         });
 
         it("should handle empty betChoices object", () => {
@@ -141,7 +129,6 @@ describe("RouletteRebetConsumer", () => {
 
             // Assert
             expect(mockPlaceBetConsumer.consume).not.toHaveBeenCalled();
-            expect(mockHandleActionSettleConsumer.consume).toHaveBeenCalledWith(player);
         });
 
         it("should handle betChoices with empty inner objects", () => {
@@ -164,7 +151,6 @@ describe("RouletteRebetConsumer", () => {
                 freeBet: false,
                 receivedTime: expect.any(Date),
             });
-            expect(mockHandleActionSettleConsumer.consume).toHaveBeenCalledWith(player);
         });
 
         it("should handle complex nested betChoices structure", () => {
@@ -183,7 +169,6 @@ describe("RouletteRebetConsumer", () => {
 
             // Assert
             expect(mockPlaceBetConsumer.consume).toHaveBeenCalledTimes(6);
-            expect(mockHandleActionSettleConsumer.consume).toHaveBeenCalledWith(player);
         });
 
         it("should handle zero bet amounts", () => {
@@ -205,7 +190,6 @@ describe("RouletteRebetConsumer", () => {
                 freeBet: false,
                 receivedTime: expect.any(Date),
             });
-            expect(mockHandleActionSettleConsumer.consume).toHaveBeenCalledWith(player);
         });
 
         it("should handle negative bet amounts", () => {
@@ -227,7 +211,6 @@ describe("RouletteRebetConsumer", () => {
                 freeBet: false,
                 receivedTime: expect.any(Date),
             });
-            expect(mockHandleActionSettleConsumer.consume).toHaveBeenCalledWith(player);
         });
 
         it("should handle decimal bet amounts", () => {
@@ -249,7 +232,6 @@ describe("RouletteRebetConsumer", () => {
                 freeBet: false,
                 receivedTime: expect.any(Date),
             });
-            expect(mockHandleActionSettleConsumer.consume).toHaveBeenCalledWith(player);
         });
     });
 

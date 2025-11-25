@@ -1,17 +1,9 @@
-import { PlaceBetConsumer, HandleActionSettleConsumer } from ".";
+import { PlaceBetConsumer } from ".";
 
 export default class RouletteRebetConsumer {
     declare placeBetConsumer: PlaceBetConsumer;
-    declare handleActionSettleConsumer: HandleActionSettleConsumer;
-    constructor({
-        placeBetConsumer,
-        handleActionSettleConsumer,
-    }: {
-        placeBetConsumer: PlaceBetConsumer;
-        handleActionSettleConsumer: HandleActionSettleConsumer;
-    }) {
+    constructor({ placeBetConsumer }: { placeBetConsumer: PlaceBetConsumer }) {
         this.placeBetConsumer = placeBetConsumer;
-        this.handleActionSettleConsumer = handleActionSettleConsumer;
     }
 
     consume(player: any, payload: any) {
@@ -19,7 +11,6 @@ export default class RouletteRebetConsumer {
             return;
         }
         this.splitBetChoices(payload).forEach((betPayload) => this.placeBetConsumer.consume(player, betPayload));
-        this.handleActionSettleConsumer.consume(player);
     }
 
     private splitBetChoices(payload: { betChoices: Record<string, Record<string, number>> }) {

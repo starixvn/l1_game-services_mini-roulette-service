@@ -17,8 +17,8 @@ export default class RouletteRoundResultConsumer {
         }
         const { randomMode } = this.gameData.gameConfigs;
         if (status?.isReached) {
-            const { winningPercentage } = status;
-            return this.definition.controlResultByBet(bet, winningPercentage, randomMode);
+            const { winningPercentage, guaranteedLossStatus } = status;
+            return this.definition.controlResultByBet(bet, winningPercentage, randomMode, !!guaranteedLossStatus);
         }
 
         return this.definition.generateResult(randomMode);

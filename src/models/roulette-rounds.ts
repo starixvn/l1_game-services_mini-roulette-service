@@ -13,9 +13,9 @@ const settlementResultSchema = new mongoose.Schema(
 const Schema = new mongoose.Schema({
     id: { type: Number, required: true },
     result: { type: Number, required: true },
-    exchangeRateId: { type: Number, required: true },
     settlementResult: settlementResultSchema,
-    time: { type: Date, default: new Date() },
+    exchangeRateId: { type: Number, required: true },
+    time: { type: Date, default: Date.now },
     uid: { type: String, required: true },
 });
 const modelName = "miniroulette_rounds";

@@ -89,7 +89,7 @@ describe("RouletteRoundResultConsumer", () => {
             const result = await consumer.generateResult(mockBet, guaranteedStatus);
 
             // Assert
-            expect(mockDefinition.controlResultByBet).toHaveBeenCalledWith(mockBet, 80, 1);
+            expect(mockDefinition.controlResultByBet).toHaveBeenCalledWith(mockBet, 80, 1, false);
             expect(result).toBe(15);
         });
 

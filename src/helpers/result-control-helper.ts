@@ -97,9 +97,8 @@ const calculateNumberResults = (bets: ExtractBetTypes[], number: number) => {
     };
 };
 
-const calculateAllNumberResults = (bet: RouletteBet): NumberResult[] => {
+const calculateAllNumberResults = (bets: ExtractBetTypes[]): NumberResult[] => {
     const { numberWheel } = Constants;
-    const bets = extractBetTypes(bet);
 
     const results = [];
     for (let number = numberWheel.min; number <= numberWheel.max; number++) {
@@ -144,16 +143,25 @@ const createWinningNumberPool = (allResults: NumberResult[]) => {
     return chance.shuffle(selectionPool);
 };
 
-export const controlResultByBet = (bet: RouletteBet, winningPercentage: number, randomMode: number) => {
+export const controlResultByBet = (bet: RouletteBet, winningPercentage: number, randomMode: number, isGuaranteedLoss = false) => {
+    const bets = extractBetTypes(bet);
+    const randomResult = generateResult(randomMode);
+    const numberResult = calculateNumberResults(bets, randomResult);
+    if (isGuaranteedLoss && numberResult.profit < 0) {
+        return randomResult;
+    }
+    if (!isGuaranteedLoss && numberResult.profit > 0) {
+        return randomResult;
+    }
     const chance = new Chance();
-    const allResults = calculateAllNumberResults(bet);
+    const allResults = calculateAllNumberResults(bets);
     const adjustedWinningPercentage = adjustWinningPercentageForBetTypes(winningPercentage, allResults);
     const shouldWin = chance.bool({ likelihood: adjustedWinningPercentage });
     const expectedNumbers = shouldWin
         ? createWinningNumberPool(allResults)
         : allResults.filter((result) => result.profit <= 0).map((result) => result.number);
     if (expectedNumbers.length === 0) {
-        return generateResult(randomMode);
+        return randomResult;
     }
 
     return chance.pickone(expectedNumbers);

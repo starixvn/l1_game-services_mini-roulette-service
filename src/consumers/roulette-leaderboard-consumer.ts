@@ -23,7 +23,7 @@ export default class RouletteLeaderboardConsumer {
         this.logService = logService;
     }
 
-    async consume(player: any, payload: { top: number } = { top: 30 }) {
+    async consume(player: any, payload: { top: number } = { top: 100 }) {
         const { session, UID } = player;
         const { currencyName, operatorId } = session;
         const { start, end } = getWeekRange(new Date());

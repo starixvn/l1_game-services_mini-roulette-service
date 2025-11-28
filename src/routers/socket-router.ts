@@ -62,7 +62,7 @@ export default class SocketRouter extends Core.Routers.BaseSocketRouter {
                 return;
             }
             const leaderboard = await this.leaderboardConsumer.consume(this.gameData.realPlayers[this.socketClient.id], {
-                top: payload?.top ?? 30,
+                top: payload?.top ?? 100,
             });
             this.socketClient.emit(this.definition.name, {
                 leaderboard,

@@ -236,7 +236,7 @@ describe("SocketRouter", () => {
             await router.handleGetLeaderboard({});
 
             // Assert
-            expect(mockLeaderboardConsumer.consume).toHaveBeenCalledWith(mockGameData.realPlayers["socket-id-1"], { top: 30 });
+            expect(mockLeaderboardConsumer.consume).toHaveBeenCalledWith(mockGameData.realPlayers["socket-id-1"], { top: 100 });
         });
 
         it("should not get leaderboard when verification fails", async () => {

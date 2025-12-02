@@ -155,7 +155,7 @@ describe("RouletteLeaderboardConsumer", () => {
         expect(result.leaderboard[0].nickname).toBe("");
     });
 
-    it("should return correct current player", async () => {
+    it("should return correct current player, no need to hide player info", async () => {
         const leaderboardDoc = {
             leaderboard: [
                 { uid: "user1", totalWin: 100, rank: 1 },
@@ -183,10 +183,10 @@ describe("RouletteLeaderboardConsumer", () => {
         expect(result.currentPlayer).toMatchObject({
             rank: 1,
             currentPlayerSettings: {
-                avatarUrl: null,
-                nickname: null,
-                hideAvatar: true,
-                hideName: true,
+                avatarUrl: "avatar_user1",
+                nickname: "nick_user1",
+                hideAvatar: false,
+                hideName: false,
             },
         });
     });

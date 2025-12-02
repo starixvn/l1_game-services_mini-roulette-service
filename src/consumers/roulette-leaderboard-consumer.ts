@@ -45,21 +45,23 @@ export default class RouletteLeaderboardConsumer {
         )
             .lean()
             .exec();
-        let currentPlayerSettings: {
-            hideAvatar: boolean;
-            hideName: boolean;
-            avatarUrl: string | null;
-            nickname: string | null;
-        } = {
-            hideAvatar: false,
-            hideName: false,
-            avatarUrl: "",
-            nickname: "",
-        };
+
+        const currentPlayerSettings = await this.langliveUserSettingConsumer.getLangliveUserSettings(uid).catch((error) => {
+            this.logService.logError(`Error getting user settings for current player ${uid}: ${JSON.stringify(error)}`);
+            return {
+                avatarUrl: "",
+                nickname: "",
+            };
+        }).then((userSettings) => {
+            return {
+                hideAvatar: false,
+                hideName: false,
+                avatarUrl: userSettings.avatarUrl,
+                nickname: userSettings.nickname,
+            };
+        });
 
         if (!leaderboards || leaderboards.length === 0) {
-            const userSettings = await this.langliveUserSettingConsumer.getLangliveUserSettings(uid);
-            currentPlayerSettings = this.formatUserSettings(userSettings);
             return { 
                 leaderboard: [], 
                 currentPlayer: { rank: -1, currentPlayerSettings, totalWin: 0 }, 
@@ -105,10 +107,6 @@ export default class RouletteLeaderboardConsumer {
 
                     const formattedUserSettings = this.formatUserSettings(userSettings);
 
-                    if (player.uid === uid) {
-                        currentPlayerSettings = formattedUserSettings;
-                    }
-
                     return {
                         ...rest,
                         avatarUrl: formattedUserSettings.avatarUrl,
@@ -127,15 +125,6 @@ export default class RouletteLeaderboardConsumer {
         );
 
         const player = rankedLeaderboard.find((x) => x.uid === uid);
-
-        if (currentPlayerSettings == null) {
-            try {
-                const userSettings = await this.langliveUserSettingConsumer.getLangliveUserSettings(uid);
-                currentPlayerSettings = this.formatUserSettings(userSettings);
-            } catch (error) {
-                this.logService.logError(`Error getting user settings for current player ${uid}: ${JSON.stringify(error)}`);
-            }
-        }
 
         return {
             leaderboard: enhancedLeaderboard,
